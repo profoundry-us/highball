@@ -1,0 +1,72 @@
+# @profoundry-us/highball
+
+The Highball runner: executes a repo's `.highball/checks.yml` rules, blocks AI
+coding agents on failure (exit 2, the Claude Code hook contract), and reports
+every run to a [Highball](https://github.com/profoundry-us/highball) dashboard.
+Enforcement stays local; Highball is the witness and system of record — the
+runner never uploads code, only pass/fail plus log tails.
+
+## Install
+
+Published releases: `npm install --save-dev @profoundry-us/highball`.
+
+From a local tarball (pre-release):
+
+```bash
+npm pack                                   # in this repo → profoundry-us-highball-<v>.tgz
+npm install --save-dev ../highball-runner/profoundry-us-highball-<v>.tgz
+```
+
+## Setup
+
+```bash
+npx highball init    # scaffolds .highball/checks.yml + Claude Code hooks
+npx highball login   # stores this machine's project token (once per machine)
+```
+
+`init` never overwrites an existing `checks.yml` and never edits an existing
+`.claude/settings.json` (it prints the hook snippet to merge by hand).
+`login` writes `~/.highball/credentials.json` (host → project → token, 0600);
+pipe the token via `--token-stdin` to keep it out of shell history. CI uses
+`HIGHBALL_URL` / `HIGHBALL_TOKEN` env vars instead.
+
+## checks.yml
+
+```yaml
+version: 1
+project: my-app
+
+reporting:
+  url: https://highball.example.com   # per-team, not a secret — committed
+
+# Containerized toolchain? Declare the wrapper once (ADR 202608 in the
+# highball repo); rules opt out with `exec: host`.
+exec:
+  via: docker compose exec -T app
+
+checks:
+  - id: unit-tests
+    name: Unit tests
+    run: bundle exec rspec spec        # runs through exec.via
+
+  - id: js-syntax
+    name: Playback JS parses
+    run: node --check web/app.js
+    exec: host                         # host-side tool, opts out
+    fast: true                         # cheap → runs on every agent edit
+
+  - id: coverage-ratchet
+    name: Coverage never decreases
+    todo: true                         # declared, tracked, not yet built
+```
+
+The runner computes the branch's changed-file list once (it owns git) and
+hands it to every rule via `HIGHBALL_CHANGED_FILES` — check scripts stay pure
+analyzers and need no git in their execution context.
+
+## Not yet ported from the Ruby proto-runner
+
+AI-judged rules (`rubric:` — headless Claude applying a markdown rubric to
+changed files) still live in the highball repo's `.highball/bin/ai-check`;
+they land here as a first-class rule type in a future release. Built-in
+generic rules (spec pairing, focused-spec detection, diff budgets) likewise.

@@ -1,0 +1,24 @@
+{
+  "name": "@profoundry-us/highball",
+  "version": "0.1.0",
+  "description": "Highball runner — executes a repo's .highball/checks.yml rules, blocks AI agents on failure, and reports runs to the Highball dashboard.",
+  "type": "module",
+  "bin": {
+    "highball": "bin/highball.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "yaml": "^2.5.0"
+  },
+  "license": "MIT"
+}

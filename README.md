@@ -17,7 +17,19 @@ npm pack                                   # in this repo → profoundry-us-high
 npm install --save-dev ../highball-runner/profoundry-us-highball-<v>.tgz
 ```
 
-## Setup
+## Setup: let the repo's own agent do it
+
+Highball is installed *by the AI agent that will be checked by it*. After
+installing the package, tell the repo's Claude Code agent:
+
+> Run `npx highball onboard` and follow the instructions.
+
+[ONBOARDING.md](ONBOARDING.md) (which that command prints) walks the agent
+through surveying the repo's real toolchain, scaffolding, writing rules that
+reflect what the repo already trusts, handing the credentials step to the
+human, and verifying all four proofs — including that exit 2 actually blocks.
+
+The pieces, for reference or manual setup:
 
 ```bash
 npx highball init    # scaffolds .highball/checks.yml + Claude Code hooks

@@ -9,7 +9,8 @@
   "files": [
     "bin",
     "lib",
-    "README.md"
+    "README.md",
+    "ONBOARDING.md"
   ],
   "engines": {
     "node": ">=18"

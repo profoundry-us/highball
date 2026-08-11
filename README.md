@@ -2,9 +2,12 @@
 
 The Highball runner: executes a repo's `.highball/checks.yml` rules, blocks AI
 coding agents on failure (exit 2, the Claude Code hook contract), and reports
-every run to a [Highball](https://github.com/profoundry-us/highball) dashboard.
+every run to a Highball dashboard — think "local CI for AI agents": the checks
+run and enforce on your machine while the dashboard records what happened.
 Enforcement stays local; Highball is the witness and system of record — the
-runner never uploads code, only pass/fail plus log tails.
+runner never uploads code, only pass/fail plus log tails. Reporting is always
+best-effort: no token or no reachable dashboard means checks still run and
+block, they just aren't recorded.
 
 ## Install
 
@@ -51,8 +54,9 @@ project: my-app
 reporting:
   url: https://highball.example.com   # per-team, not a secret — committed
 
-# Containerized toolchain? Declare the wrapper once (ADR 202608 in the
-# highball repo); rules opt out with `exec: host`.
+# Containerized toolchain? Declare the wrapper once and every rule runs
+# through it; rules opt out with `exec: host`. Rule definitions stay
+# environment-agnostic on purpose — the *where* is per-checkout config.
 exec:
   via: docker compose exec -T app
 
@@ -76,9 +80,10 @@ The runner computes the branch's changed-file list once (it owns git) and
 hands it to every rule via `HIGHBALL_CHANGED_FILES` — check scripts stay pure
 analyzers and need no git in their execution context.
 
-## Not yet ported from the Ruby proto-runner
+## Roadmap
 
 AI-judged rules (`rubric:` — headless Claude applying a markdown rubric to
-changed files) still live in the highball repo's `.highball/bin/ai-check`;
-they land here as a first-class rule type in a future release. Built-in
-generic rules (spec pairing, focused-spec detection, diff budgets) likewise.
+changed files) land here as a first-class rule type in a future release.
+Built-in generic rules (spec pairing, focused-spec detection, diff budgets)
+likewise, along with per-framework starter packs (`highball-rails`,
+`highball-python`, `highball-go`) carrying recommended check scripts.

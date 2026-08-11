@@ -1,7 +1,23 @@
 {
   "name": "@profoundry-us/highball",
   "version": "0.1.0",
-  "description": "Highball runner — executes a repo's .highball/checks.yml rules, blocks AI agents on failure, and reports runs to the Highball dashboard.",
+  "description": "Highball runner — local CI for AI coding agents: runs a repo's .highball/checks.yml rules, blocks the agent on failure, and reports runs to a Highball dashboard.",
+  "keywords": [
+    "ai",
+    "claude-code",
+    "hooks",
+    "checks",
+    "ci",
+    "code-quality"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/profoundry-us/highball-runner.git"
+  },
+  "homepage": "https://github.com/profoundry-us/highball-runner#readme",
+  "bugs": {
+    "url": "https://github.com/profoundry-us/highball-runner/issues"
+  },
   "type": "module",
   "bin": {
     "highball": "bin/highball.js"

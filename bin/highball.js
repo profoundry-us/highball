@@ -8,6 +8,7 @@ import { init } from "../lib/init.js";
 import { login } from "../lib/login.js";
 import { onboard } from "../lib/onboard.js";
 import { runs } from "../lib/runs.js";
+import { mcp } from "../lib/mcp.js";
 
 const [command, ...args] = process.argv.slice(2);
 
@@ -29,6 +30,9 @@ Usage:
                             ~/.highball/runs — no dashboard needed.
                             With a number, that run's detail; add
                             --logs for every rule's captured output.
+  highball mcp              Serve run history over MCP (stdio), with an
+                            MCP Apps dashboard widget for hosts that
+                            render them (e.g. Claude Desktop).
 `;
 
 switch (command) {
@@ -46,6 +50,9 @@ switch (command) {
     break;
   case "runs":
     process.exit(await runs(args));
+    break;
+  case "mcp":
+    await mcp();
     break;
   default:
     console.log(USAGE);

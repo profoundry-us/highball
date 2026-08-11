@@ -1,6 +1,6 @@
 {
   "name": "@profoundry-us/highball",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Highball runner — local CI for AI coding agents: runs a repo's .highball/checks.yml rules, blocks the agent on failure, and reports runs to a Highball dashboard.",
   "keywords": [
     "ai",
@@ -25,6 +25,7 @@
   "files": [
     "bin",
     "lib",
+    "assets",
     "README.md",
     "ONBOARDING.md"
   ],
@@ -35,6 +36,8 @@
     "test": "node --test"
   },
   "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.7.5",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "yaml": "^2.5.0"
   },
   "license": "MIT"

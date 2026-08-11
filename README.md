@@ -86,6 +86,19 @@ The runner computes the branch's changed-file list once (it owns git) and
 hands it to every rule via `HIGHBALL_CHANGED_FILES` — check scripts stay pure
 analyzers and need no git in their execution context.
 
+## The MCP dashboard widget
+
+`highball mcp` serves the journal over MCP (stdio) with three tools —
+`list_runs`, `get_run`, `run_checks` — and an
+[MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) widget:
+in hosts that render Apps (Claude Desktop and friends), asking about your
+checks produces an interactive inline dashboard — click a run for per-rule
+detail with expandable command output, re-run fast or full checks from a
+button. In hosts without Apps support the same tools answer in plain text,
+per the extension's graceful-degradation rule. Register it as
+`command: npx`, `args: ["highball", "mcp"]` (or absolute paths for hosts
+that spawn outside your shell PATH).
+
 ## Run history without a dashboard
 
 Every run also appends to a local journal (`~/.highball/runs/<project>.jsonl`,

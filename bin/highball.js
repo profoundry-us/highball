@@ -7,6 +7,7 @@ import { run } from "../lib/run.js";
 import { init } from "../lib/init.js";
 import { login } from "../lib/login.js";
 import { onboard } from "../lib/onboard.js";
+import { runs } from "../lib/runs.js";
 
 const [command, ...args] = process.argv.slice(2);
 
@@ -24,6 +25,9 @@ Usage:
   highball onboard          Print the setup guide written for this repo's
                             AI agent — tell your agent to run this and
                             follow it.
+  highball runs [n]         Local run history (newest first) from
+                            ~/.highball/runs — no dashboard needed.
+                            With a number, that run's full detail.
 `;
 
 switch (command) {
@@ -38,6 +42,9 @@ switch (command) {
     break;
   case "onboard":
     process.exit(await onboard(args));
+    break;
+  case "runs":
+    process.exit(await runs(args));
     break;
   default:
     console.log(USAGE);

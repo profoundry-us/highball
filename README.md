@@ -86,6 +86,16 @@ The runner computes the branch's changed-file list once (it owns git) and
 hands it to every rule via `HIGHBALL_CHANGED_FILES` — check scripts stay pure
 analyzers and need no git in their execution context.
 
+## Run history without a dashboard
+
+Every run also appends to a local journal (`~/.highball/runs/<project>.jsonl`,
+pruned to the last 200) — unconditionally, whether or not reporting is
+configured. `npx highball runs` lists recent runs; `npx highball runs 3`
+shows one run's full detail including failure output. So the runner is
+self-sufficient out of the box: the hosted dashboard adds team visibility,
+history beyond your machine, and attribution — it's never required to see
+what happened.
+
 ## Roadmap
 
 AI-judged rules (`rubric:` — headless Claude applying a markdown rubric to

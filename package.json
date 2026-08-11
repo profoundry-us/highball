@@ -33,7 +33,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "harness": "node dev/harness/serve.js"
   },
   "dependencies": {
     "@modelcontextprotocol/ext-apps": "^1.7.5",

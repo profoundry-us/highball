@@ -99,6 +99,15 @@ per the extension's graceful-degradation rule. Register it as
 `command: npx`, `args: ["highball", "mcp"]` (or absolute paths for hosts
 that spawn outside your shell PATH).
 
+The split is capability-driven, not guesswork: the server reads the
+client's initialize capabilities (`io.modelcontextprotocol/ui`) — hosts
+that render MCP Apps get a short text summary plus the widget; everything
+else gets the full picture as aligned plain text. Widget development has
+its own harness — `npm run harness`, open http://localhost:3777 — which
+plays the host role against the real `assets/dashboard.html` and live
+journal data, so widget edits are a reload away instead of a Claude
+Desktop restart.
+
 ## Run history without a dashboard
 
 Every run also appends to a local journal (`~/.highball/runs/<project>.jsonl`,

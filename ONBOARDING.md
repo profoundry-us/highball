@@ -21,6 +21,13 @@ local tarball path they provide. In a repo with no `package.json`, create
 a minimal private one first (`{ "name": "<repo>", "private": true }`) and
 gitignore `node_modules/` if it isn't already.
 
+**Never run bare `npx highball` where the package is NOT installed**: the
+unscoped npm name `highball` belongs to an unrelated package, and npx
+would fetch that instead of this runner. Installed locally, the bare name
+is safe (npx resolves `node_modules/.bin` first — that's why install is
+step 0); for a one-off without installing, use the scoped form,
+`npx @profoundry-us/highball <command>`.
+
 ## 1. Survey the repo before writing anything
 
 Answer these by reading, not assuming:

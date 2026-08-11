@@ -13,6 +13,12 @@ block, they just aren't recorded.
 
 Published releases: `npm install --save-dev @profoundry-us/highball`.
 
+Install before running anything: with the package in `node_modules`, the
+short `npx highball …` form resolves to this runner's binary. Without it,
+bare `npx highball` would fetch the unrelated unscoped `highball` package
+from the registry — for uninstalled one-offs, always use the scoped form
+(`npx @profoundry-us/highball <command>`).
+
 From a local tarball (pre-release):
 
 ```bash

@@ -27,7 +27,8 @@ Usage:
                             follow it.
   highball runs [n]         Local run history (newest first) from
                             ~/.highball/runs — no dashboard needed.
-                            With a number, that run's full detail.
+                            With a number, that run's detail; add
+                            --logs for every rule's captured output.
 `;
 
 switch (command) {

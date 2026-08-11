@@ -91,10 +91,12 @@ analyzers and need no git in their execution context.
 Every run also appends to a local journal (`~/.highball/runs/<project>.jsonl`,
 pruned to the last 200) — unconditionally, whether or not reporting is
 configured. `npx highball runs` lists recent runs; `npx highball runs 3`
-shows one run's full detail including failure output. So the runner is
-self-sufficient out of the box: the hosted dashboard adds team visibility,
-history beyond your machine, and attribution — it's never required to see
-what happened.
+shows one run's detail with failure output, and `--logs` prints every
+rule's captured output, GitHub-Actions-style — the journal keeps the last
+10KB per rule, pass or fail, while the dashboard receives failure tails
+only. So the runner is self-sufficient out of the box: the hosted
+dashboard adds team visibility, history beyond your machine, and
+attribution — it's never required to see what happened.
 
 ## Roadmap
 

@@ -97,8 +97,17 @@
       return;
     }
     if (msg.method === "ui/notifications/tool-result") {
+      toolInFlight = false;
       const result = msg.params?.result ?? msg.params ?? {};
       if (result.structuredContent) render(result.structuredContent);
+      return;
+    }
+    // The host streams tool-input while the originating tool is still
+    // executing (e.g. run_checks taking seconds) — don't let the
+    // impatient self-fetch clobber the view; the result is coming.
+    if (msg.method === "ui/notifications/tool-input" ||
+        msg.method === "ui/notifications/tool-input-partial") {
+      toolInFlight = true;
       return;
     }
     if (msg.id !== undefined) {
@@ -115,6 +124,7 @@
 
   const app = document.getElementById("app");
   let context = { project: null, dir: null };
+  let toolInFlight = false;
 
   function esc(text) {
     return String(text ?? "").replace(/[&<>"]/g, (c) =>
@@ -151,11 +161,25 @@
   function render(sc) {
     if (sc.runs && sc.project !== undefined) return renderList(sc);
     if (sc.run) return renderDetail(sc);
-    if (sc.projects) {
-      app.innerHTML = `<div class="empty">No project resolved. ` +
-        `Journaled: ${esc(sc.projects.join(", ") || "none")}</div>`;
+    if (sc.projects) return renderPicker(sc.projects);
+  }
+
+  // Nothing resolved server-side: offer the journaled projects as
+  // buttons instead of a dead end.
+  function renderPicker(projects) {
+    if (projects.length === 0) {
+      app.innerHTML = `<div class="empty">No runs journaled on this machine yet.</div>`;
       return resize();
     }
+    app.innerHTML =
+      header("Highball — pick a project", "") +
+      `<div class="empty" style="padding:10px 6px">` +
+      projects.map((slug) => `<button data-project="${esc(slug)}" style="margin:0 4px">${esc(slug)}</button>`).join("") +
+      `</div>`;
+    app.querySelectorAll("[data-project]").forEach((el) =>
+      el.addEventListener("click", () =>
+        callTool("list_runs", { project: el.dataset.project })));
+    resize();
   }
 
   function renderList(sc) {
@@ -242,10 +266,15 @@
       // still gives us data if tools/call works.
     }
     // If the host doesn't push the originating tool result promptly,
-    // fetch the list ourselves — makes the widget self-sufficient.
-    setTimeout(() => {
-      if (app.querySelector(".empty")) callTool("list_runs", {}).catch(() => {});
-    }, 900);
+    // fetch the list ourselves — makes the widget self-sufficient. But
+    // never while a tool is executing (tool-input arrived): the widget
+    // may be preloaded seconds before a slow run_checks resolves.
+    const selfFetch = (attempt) => {
+      if (!app.querySelector(".empty") || attempt > 20) return;
+      if (toolInFlight) return setTimeout(() => selfFetch(attempt + 1), 900);
+      callTool("list_runs", {}).catch(() => {});
+    };
+    setTimeout(() => selfFetch(0), 900);
   })();
 })();
 </script>

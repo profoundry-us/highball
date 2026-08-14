@@ -62,8 +62,23 @@
     cursor: pointer; list-style: none;
   }
   details.rule > summary::-webkit-details-marker { display: none; }
+  /* A rule with nothing to reveal (todo: no command ran) is NOT a details —
+     it must not advertise a chevron or a pointer cursor it can't honor. */
+  .rule.static > .rowline {
+    display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+  }
+  .rule.static {
+    border: 1px solid var(--line); border-radius: 8px; background: var(--card);
+    margin-bottom: 6px;
+  }
+  .panel { border-top: 1px solid var(--line); padding: 4px 12px 10px; }
+  .panel-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    opacity: 0.55; margin: 8px 0 4px;
+  }
+  .panel-note { font-size: 12px; opacity: 0.6; margin: 8px 0 2px; }
   details.rule pre {
-    margin: 0; padding: 10px 12px; border-top: 1px solid var(--line);
+    margin: 0; padding: 8px 10px; border-radius: 6px; background: var(--gray-bg);
     overflow-x: auto; font-size: 11.5px; line-height: 1.45;
     font-family: ui-monospace, Menlo, monospace; white-space: pre-wrap;
   }
@@ -224,19 +239,36 @@
     context = { project: sc.project ?? context.project, dir: sc.dir ?? context.dir };
     const run = sc.run;
     const rules = run.results.map((result) => {
-      const openable = !!result.output_tail;
-      const body = openable
-        ? `<pre>${esc(result.output_tail)}</pre>` : "";
       const duration = result.duration_ms != null
         ? `${(result.duration_ms / 1000).toFixed(1)}s` : "";
-      return `<details class="rule"${result.status === "failed" && openable ? " open" : ""}>
-        <summary>
-          <span class="glyph ${esc(result.status)}">${result.status === "passed" ? "✓" : result.status === "todo" ? "•" : "✗"}</span>
-          <span>${esc(result.name)}</span>
-          <span class="spacer"></span>
-          ${chip(result.status)}
-          <span class="meta">${duration}</span>
-        </summary>${body}</details>`;
+      const row =
+        `<span class="glyph ${esc(result.status)}">${result.status === "passed" ? "✓" : result.status === "todo" ? "•" : "✗"}</span>` +
+        `<span>${esc(result.name)}</span>` +
+        `<span class="spacer"></span>` +
+        chip(result.status) +
+        `<span class="meta">${duration}</span>`;
+
+      // What the panel can actually show. Quiet rules (the AI judges print
+      // nothing when they pass) still have their command, so every rule that
+      // really ran stays worth opening.
+      const parts = [];
+      if (result.command) {
+        parts.push(`<div class="panel-label">Command</div><pre>$ ${esc(result.command)}</pre>`);
+      }
+      if (result.output_tail) {
+        parts.push(`<div class="panel-label">Output</div><pre>${esc(result.output_tail)}</pre>`);
+      }
+      // Journal records written before commands were recorded: keep real
+      // rules openable rather than silently turning them inert.
+      if (parts.length === 0 && result.status !== "todo") {
+        parts.push(`<div class="panel-note">No output captured for this rule.</div>`);
+      }
+
+      if (parts.length === 0) {
+        return `<div class="rule static"><div class="rowline">${row}</div></div>`;
+      }
+      return `<details class="rule"${result.status === "failed" ? " open" : ""}>` +
+        `<summary>${row}</summary><div class="panel">${parts.join("")}</div></details>`;
     }).join("");
     app.innerHTML =
       header(

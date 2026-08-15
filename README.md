@@ -13,11 +13,10 @@ block, they just aren't recorded.
 
 Published releases: `npm install --save-dev @profoundry-us/highball`.
 
-Install before running anything: with the package in `node_modules`, the
-short `npx highball …` form resolves to this runner's binary. Without it,
-bare `npx highball` would fetch the unrelated unscoped `highball` package
-from the registry — for uninstalled one-offs, always use the scoped form
-(`npx @profoundry-us/highball <command>`).
+**Always use the scoped name.** The unscoped npm name `highball` belongs to
+an unrelated package, so a bare `npx highball` — in a committed hook, a
+README, or a one-off — is a single uninstalled checkout away from fetching
+a stranger's code and running it.
 
 From a local tarball (pre-release):
 
@@ -31,7 +30,7 @@ npm install --save-dev ../highball-runner/profoundry-us-highball-<v>.tgz
 Highball is installed *by the AI agent that will be checked by it*. After
 installing the package, tell the repo's Claude Code agent:
 
-> Run `npx highball onboard` and follow the instructions.
+> Run `npx @profoundry-us/highball onboard` and follow the instructions.
 
 [ONBOARDING.md](ONBOARDING.md) (which that command prints) walks the agent
 through surveying the repo's real toolchain, scaffolding, writing rules that
@@ -41,8 +40,8 @@ human, and verifying all four proofs — including that exit 2 actually blocks.
 The pieces, for reference or manual setup:
 
 ```bash
-npx highball init    # scaffolds .highball/checks.yml + Claude Code hooks
-npx highball login   # stores this machine's project token (once per machine)
+npx @profoundry-us/highball init    # scaffolds checks.yml + Claude Code hooks
+npx @profoundry-us/highball login   # stores a project token (once per machine)
 ```
 
 `init` never overwrites an existing `checks.yml` and never edits an existing
@@ -95,9 +94,17 @@ in hosts that render Apps (Claude Desktop and friends), asking about your
 checks produces an interactive inline dashboard — click a run for per-rule
 detail with expandable command output, re-run fast or full checks from a
 button. In hosts without Apps support the same tools answer in plain text,
-per the extension's graceful-degradation rule. Register it as
-`command: npx`, `args: ["highball", "mcp"]` (or absolute paths for hosts
-that spawn outside your shell PATH).
+per the extension's graceful-degradation rule. Register it with the scoped
+name — hosts spawn the server from an arbitrary directory, so it resolves
+from the registry rather than a local install:
+
+```json
+"highball": { "command": "npx", "args": ["-y", "@profoundry-us/highball", "mcp"] }
+```
+
+The journal it reads is machine-global (`~/.highball/runs/`), so one
+registration covers every repo on that machine — there is no per-repo MCP
+setup.
 
 The split is capability-driven, not guesswork: the server reads the
 client's initialize capabilities (`io.modelcontextprotocol/ui`) — hosts
@@ -112,8 +119,8 @@ Desktop restart.
 
 Every run also appends to a local journal (`~/.highball/runs/<project>.jsonl`,
 pruned to the last 200) — unconditionally, whether or not reporting is
-configured. `npx highball runs` lists recent runs; `npx highball runs 3`
-shows one run's detail with failure output, and `--logs` prints every
+configured. `npx @profoundry-us/highball runs` lists recent runs; adding a
+number shows one run's detail with failure output, and `--logs` prints every
 rule's captured output, GitHub-Actions-style — the journal keeps the last
 10KB per rule, pass or fail, while the dashboard receives failure tails
 only. So the runner is self-sufficient out of the box: the hosted

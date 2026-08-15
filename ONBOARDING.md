@@ -14,7 +14,7 @@ yourself.
 
 ## 0. Preconditions
 
-`npx highball --help` must work (Node >= 18, package installed as a dev
+`npx @profoundry-us/highball --help` must work (Node >= 18, package installed as a dev
 dependency). If it doesn't, ask your human whether to install from the npm
 registry (`npm install --save-dev @profoundry-us/highball`) or from a
 local tarball path they provide. In a repo with no `package.json`, create
@@ -36,19 +36,57 @@ Answer these by reading, not assuming:
   repo *already trust* — look at `package.json` scripts, a `justfile` or
   `Makefile`, CI workflows, README instructions. Wire what exists; invent
   no new tooling in the first pass.
-- **Host or container?** If the toolchain runs in Docker (compose files, a
-  devcontainer), find the dev service's name, then verify the repo mount
-  and working directory by running `pwd` and `ls` through
-  `docker compose exec -T <service>`. Rules will run there; you need to
-  know what paths they see.
+- **Host or container?** Settle this before writing a single rule — see the
+  callout immediately below. Getting it wrong makes every rule fail for the
+  same uninteresting reason, and it is the most common way this setup
+  stalls.
 - **What's fast?** Time candidate commands. Only sub-~2s commands belong
   on the per-edit path; test suites belong at turn end; anything needing a
   live server or long setup should not gate turns at all (leave it to the
   repo's existing workflow, or declare it `todo`).
 
+### If the repo's toolchain lives in Docker
+
+Plenty of repos run *everything* through containers — the host may have no
+Ruby, no Python, no database at all. Highball handles this, but only if you
+declare it. **The runner itself always stays on the host** (that's where the
+hooks fire and where the journal lives); only the rule commands move.
+
+Find the dev service and confirm what it actually sees, rather than assuming
+the layout:
+
+```bash
+docker compose ps --services
+docker compose exec -T <service> sh -c 'pwd && ls'
+```
+
+Then declare the wrapper once, and every rule runs through it:
+
+```yaml
+exec:
+  via: docker compose exec -T --workdir /app app
+```
+
+Four traps, each of which has bitten a real onboarding:
+
+1. **`-T` is mandatory.** Hook shells have no TTY; without it commands hang
+   or die with "the input device is not a TTY".
+2. **Set `--workdir`** to wherever the repo is mounted (verify with `pwd`
+   above). Containers frequently start somewhere other than the mount root.
+3. **Self-orchestrating commands must opt out with `exec: host`.** A
+   `just test` / `make test` target that runs its *own* `docker compose
+   exec` would otherwise be double-wrapped into nonsense.
+4. **Host-only tools opt out too.** If a linter or parser exists on the host
+   but not in the image (`node --check` against a JS bundle, say), mark that
+   rule `exec: host`.
+
+A stopped container makes every wrapped rule fail. That's correct behavior —
+unverifiable is not passing — but say so plainly to your human rather than
+quietly dropping the rules.
+
 ## 2. Scaffold
 
-Run `npx highball init`. It never overwrites: an existing
+Run `npx @profoundry-us/highball init`. It never overwrites: an existing
 `.highball/checks.yml` is kept, and if `.claude/settings.json` already
 exists it prints the hook snippet for you to merge by hand — merge it
 without disturbing existing hooks. Otherwise it creates both files.
@@ -110,7 +148,7 @@ Decision rules:
 You must never see, type, or store a token value. Ask your human to:
 
 1. Create this project (and a token for it) in their Highball app.
-2. Run `npx highball login` themselves — interactively, or piping the
+2. Run `npx @profoundry-us/highball login` themselves — interactively, or piping the
    token via `--token-stdin` to keep it out of shell history.
 
 This stores the token in `~/.highball/credentials.json` (machine-local,
@@ -119,8 +157,8 @@ vars instead. The repo tree never contains a secret.
 
 ## 5. Verify — all four proofs, not just the happy path
 
-1. **Fast path:** `npx highball run --fast` exits 0, every rule passed.
-2. **Full path:** `npx highball run` exits 0 (or fails honestly on real
+1. **Fast path:** `npx @profoundry-us/highball run --fast` exits 0, every rule passed.
+2. **Full path:** `npx @profoundry-us/highball run` exits 0 (or fails honestly on real
    pre-existing issues — surface those to your human rather than papering
    over them).
 3. **The guardrail:** prove exit 2 works. Create an obviously-temporary

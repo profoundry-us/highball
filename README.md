@@ -76,6 +76,10 @@ checks:
     exec: host                         # host-side tool, opts out
     fast: true                         # cheap → runs on every agent edit
 
+  - id: architecture-quality
+    name: Architecture & naming (AI)
+    rubric: .highball/packs/rails/rubrics/architecture.md
+
   - id: coverage-ratchet
     name: Coverage never decreases
     todo: true                         # declared, tracked, not yet built
@@ -84,6 +88,38 @@ checks:
 The runner computes the branch's changed-file list once (it owns git) and
 hands it to every rule via `HIGHBALL_CHANGED_FILES` — check scripts stay pure
 analyzers and need no git in their execution context.
+
+## AI-judged rules
+
+A rule with `rubric:` instead of `run:` is judged by headless Claude rather
+than by a script: the runner bundles the changed files the rubric asks for,
+applies the rubric, and turns the verdict into the same pass/fail contract
+every other rule uses.
+
+The rubric is markdown with optional YAML front matter, which carries the only
+language-specific part:
+
+```markdown
+---
+include: "**/*.rb"          # default: every changed file
+exclude: [db/, config/]     # path prefixes
+model: claude-haiku-4-5-20251001
+---
+
+A comment VIOLATES this rubric when it restates what the code already says.
+```
+
+Three properties are enforced by the runner rather than left to each repo:
+
+- **Never on the fast path.** Rubric rules are dropped from `--fast` runs even
+  if marked `fast: true` — otherwise you pay model latency on every edit.
+- **Always host-side.** The judge needs the `claude` CLI, so `exec.via` never
+  wraps it and no `exec: host` annotation is required.
+- **No evidence, no call.** When nothing in the changed set matches `include`,
+  the rule passes without spawning the model at all.
+
+Rubrics live with the opinions they express: a framework pack such as
+`@profoundry-us/highball-rails` ships them, and the runner supplies the engine.
 
 ## The MCP dashboard widget
 
@@ -129,8 +165,8 @@ attribution — it's never required to see what happened.
 
 ## Roadmap
 
-AI-judged rules (`rubric:` — headless Claude applying a markdown rubric to
-changed files) land here as a first-class rule type in a future release.
 Built-in generic rules (spec pairing, focused-spec detection, diff budgets)
-likewise, along with per-framework starter packs (`highball-rails`,
-`highball-python`, `highball-go`) carrying recommended check scripts.
+land here in a future release, along with more per-framework starter packs
+(`highball-python`, `highball-go`) carrying recommended check scripts. The
+Rails pack ([`@profoundry-us/highball-rails`](https://github.com/profoundry-us/highball-rails))
+and AI-judged `rubric:` rules have shipped.

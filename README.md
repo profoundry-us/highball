@@ -165,6 +165,11 @@ batch into turns. Measured across 842 real runs on one developer's machine
 over 18 active days and 9 projects: a median of 22 runs/day, `edit` and `stop`
 runs at close to 1.3:1, and ~15k events/month/dev at the model above.
 
+Dashboard queries live in [docs/posthog-queries.sql](docs/posthog-queries.sql)
+— rule cost vs. benefit, failure rate by week, fast-path latency, repo health,
+and todo debt. They are versioned rather than left as PostHog UI state, which
+drifts and cannot be reviewed.
+
 Events are attributed to `git config user.email`, falling back to
 `user@hostname` when git has no identity (CI images, fresh containers).
 `HIGHBALL_POSTHOG_DISTINCT_ID` overrides it.

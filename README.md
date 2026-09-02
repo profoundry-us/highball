@@ -67,11 +67,8 @@ version: 1
 project: my-app
 # runs_limit: 25   # rows the MCP widget / list_runs return; HIGHBALL_RUNS_LIMIT overrides
 
+# Optional. Omit the block entirely to keep runs in the local journal only.
 reporting:
-  url: https://highball.example.com   # per-team, not a secret — committed
-
-  # Optional second sink, independent of the one above. Either, both, or
-  # neither may be configured.
   posthog:
     host: https://us.i.posthog.com    # EU cloud or self-hosted also fine
     project_key: phc_xxx              # write-only by design — committed

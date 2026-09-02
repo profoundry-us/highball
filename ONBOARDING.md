@@ -100,8 +100,11 @@ like this:
 version: 1
 project: my-mud            # ask your human if their org has slug conventions
 
-reporting:
-  url: https://highball.example.com   # human provides; committed, not secret
+# Optional — see step 4. Skip unless your human asks for telemetry.
+# reporting:
+#   posthog:
+#     host: https://us.i.posthog.com   # human provides; committed, not secret
+#     project_key: phc_xxx
 
 # Toolchain in Docker: declare the wrapper once. -T is mandatory (hook
 # shells have no TTY); --workdir should be the container's repo mount.

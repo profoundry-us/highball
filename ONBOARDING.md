@@ -3,10 +3,10 @@
 You are setting up Highball in this repository. Highball gives you (the
 agent) guardrails while you work — a checks runner your Claude Code hooks
 fire on every edit and turn end, whose exit code 2 blocks you until the
-repo's rules pass — and gives your human a hosted dashboard recording
-every run. You are configuring the tool that will check your own future
-work: set it up so the rules reflect what this repo already trusts, not
-what you wish it did.
+repo's rules pass. Runs can optionally be reported to your human's own
+PostHog project. You are configuring the tool that will check your own
+future work: set it up so the rules reflect what this repo already trusts,
+not what you wish it did.
 
 Work through the steps in order. Steps marked **human** need your human's
 input or action — ask, don't guess, and never handle credential values
@@ -143,17 +143,18 @@ Decision rules:
   repo-relative) to every rule — scripts that want changed-only behavior
   can read it instead of shelling out to git.
 
-## 4. Credentials — **human**
+## 4. Telemetry — **human**, and optional
 
-You must never see, type, or store a token value. Ask your human to:
+Highball enforces with no account and no network. Reporting is a separate,
+optional decision, and it is your human's to make — ask, do not assume.
 
-1. Create this project (and a token for it) in their Highball app.
-2. Run `npx @profoundry-us/highball login` themselves — interactively, or piping the
-   token via `--token-stdin` to keep it out of shell history.
-
-This stores the token in `~/.highball/credentials.json` (machine-local,
-0600, keyed host → project). CI uses `HIGHBALL_URL`/`HIGHBALL_TOKEN` env
-vars instead. The repo tree never contains a secret.
+If they want it, they add a `reporting.posthog` block to `checks.yml` with
+their PostHog host and project key. That key is write-only by design (it is
+the same one that ships in client-side web bundles), so it is committed
+config, not a secret — there is no login step and no credentials file. If
+they would rather not send anything anywhere, skip the block: the local
+journal (`highball runs`) already records every run in more detail than
+PostHog receives.
 
 ## 5. Verify — all four proofs, not just the happy path
 
@@ -165,17 +166,19 @@ vars instead. The repo tree never contains a secret.
    failing file (e.g. a syntax error in a `tmp_highball_plant.*` file),
    run the fast path, confirm `FAILED` plus exit code 2 plus the failure
    text on stderr — then delete the plant and confirm green again.
-4. **The witness:** every run above should print
-   `reported to <host> (run <id>)`. If you see
-   `highball reporting skipped: …` instead, diagnose in order: is
-   `reporting.url` set? did the human run `login` for this exact URL and
-   project slug? is the Highball app reachable from this machine?
+4. **The record:** `npx @profoundry-us/highball runs` lists the runs you
+   just made, with per-rule status. If your human opted into telemetry,
+   each run also prints `reported N events to <host>`; if you see
+   `highball posthog reporting skipped: …` instead, check the host and
+   project key in `reporting.posthog` and whether this machine can reach
+   the host. Reporting never blocks a run, so this is the last thing to
+   fix, not the first.
 
 ## 6. Report back — **human**
 
 Tell your human, concretely: which rules you wired and why each is
 fast/turn-end/todo; what you deliberately did NOT gate (slow suites,
 live-server tests); that hooks now block your turns on failures and how
-to remove them (`.claude/settings.json`) if they ever need to; and where
-credentials live. Follow this repo's own norms about committing the new
-files — do not commit without being asked.
+to remove them (`.claude/settings.json`) if they ever need to; and whether
+you wired telemetry or left it off. Follow this repo's own norms about
+committing the new files — do not commit without being asked.

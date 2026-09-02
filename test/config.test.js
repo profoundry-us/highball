@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { commandFor, resolveReporting } from "../lib/config.js";
+import { commandFor } from "../lib/config.js";
 
 test("commandFor refuses to shell out for a rubric rule", () => {
   const rule = { rubric: ".highball/packs/rails/rubrics/architecture.md" };
@@ -31,23 +31,4 @@ test("commandFor honors a rule's host opt-out", () => {
   assert.equal(commandFor(rule, config), "node --check playback/web/maps.js");
 });
 
-test("resolveReporting: env vars win, credentials file is the fallback", () => {
-  const config = { project: "demo", reporting: { url: "http://localhost:3600" } };
-  const credentials = { "http://localhost:3600": { demo: "hb_from_file" } };
 
-  assert.deepEqual(resolveReporting(config, {}, credentials), {
-    url: "http://localhost:3600",
-    token: "hb_from_file"
-  });
-  assert.deepEqual(
-    resolveReporting(config, { HIGHBALL_URL: "http://other:1", HIGHBALL_TOKEN: "hb_env" }, credentials),
-    { url: "http://other:1", token: "hb_env" }
-  );
-});
-
-test("resolveReporting yields nulls when nothing is configured", () => {
-  assert.deepEqual(resolveReporting({ project: "demo" }, {}, {}), {
-    url: null,
-    token: null
-  });
-});

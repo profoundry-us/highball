@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "widget-harness",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "harness"],
+      "port": 3777
+    }
+  ]
+}

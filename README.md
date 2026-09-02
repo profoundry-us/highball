@@ -5,7 +5,8 @@ coding agents on failure (exit 2, the Claude Code hook contract), and reports
 every run to a Highball dashboard — think "local CI for AI agents": the checks
 run and enforce on your machine while the dashboard records what happened.
 Enforcement stays local; Highball is the witness and system of record — the
-runner never uploads code, only pass/fail plus log tails. Reporting is always
+runner never uploads code, only pass/fail plus log tails. It reports to a
+Highball dashboard, to PostHog, or to both. Reporting is always
 best-effort: no token or no reachable dashboard means checks still run and
 block, they just aren't recorded.
 
@@ -58,6 +59,12 @@ project: my-app
 
 reporting:
   url: https://highball.example.com   # per-team, not a secret — committed
+
+  # Optional second sink, independent of the one above. Either, both, or
+  # neither may be configured.
+  posthog:
+    host: https://us.i.posthog.com    # EU cloud or self-hosted also fine
+    project_key: phc_xxx              # write-only by design — committed
 
 # Containerized toolchain? Declare the wrapper once and every rule runs
 # through it; rules opt out with `exec: host`. Rule definitions stay
@@ -120,6 +127,52 @@ Three properties are enforced by the runner rather than left to each repo:
 
 Rubrics live with the opinions they express: a framework pack such as
 `@profoundry-us/highball-rails` ships them, and the runner supplies the engine.
+
+## Reporting to PostHog
+
+`reporting.posthog` sends the same runs to PostHog instead of (or alongside)
+a Highball dashboard, so a team that already runs PostHog needs no server for
+this. A PostHog project key is write-only by design, so unlike the dashboard
+token it is committed config — there is no `login` step and no credentials
+file. `HIGHBALL_POSTHOG_KEY` / `HIGHBALL_POSTHOG_HOST` (or `POSTHOG_API_KEY` /
+`POSTHOG_HOST`) override it for CI.
+
+The whole run leaves in ONE request to `/batch/`. The dashboard protocol opens
+a run, POSTs each result, then PATCHes the status — twenty round trips for an
+eighteen-rule run. PostHog events are immutable, which suits a runner that
+already defers reporting to after the checks finish.
+
+Two event types per run:
+
+| event | one per | key properties |
+| --- | --- | --- |
+| `highball_run` | run | `status`, `duration_ms`, `rules_passed/failed/todo`, `rules_run[]`, `failed_rules[]` |
+| `highball_check` | rule result | `rule_id`, `rule_name`, `status`, `duration_ms`, `summary`, `command` |
+
+Run context (`project`, `branch`, `commit`, `trigger`, `session_key`,
+`runner_version`) is repeated on every event rather than joined at query time,
+because PostHog has no join back to a run: a breakdown like "failure rate by
+rule, on this branch only" needs `branch` on the check event itself.
+`rules_run[]` is the denominator for any per-rule rate that spans runs whose
+rulesets differ.
+
+Log tails are never sent — multi-kilobyte blobs in event properties bloat the
+column store and slow every query that touches it. Failures carry a one-line
+`summary`; the full output stays in the local journal (below).
+
+Volume is smaller than "runs on every edit" suggests, because agent edits
+batch into turns. Measured across 842 real runs on one developer's machine
+over 18 active days and 9 projects: a median of 22 runs/day, `edit` and `stop`
+runs at close to 1.3:1, and ~15k events/month/dev at the model above.
+
+Dashboard queries live in [docs/posthog-queries.sql](docs/posthog-queries.sql)
+— rule cost vs. benefit, failure rate by week, fast-path latency, repo health,
+and todo debt. They are versioned rather than left as PostHog UI state, which
+drifts and cannot be reviewed.
+
+Events are attributed to `git config user.email`, falling back to
+`user@hostname` when git has no identity (CI images, fresh containers).
+`HIGHBALL_POSTHOG_DISTINCT_ID` overrides it.
 
 ## The MCP dashboard widget
 

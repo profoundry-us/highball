@@ -5,7 +5,7 @@
 # Auth is OIDC "trusted publishing" — no stored secrets, nothing to rotate.
 # One-time registry setup: npmjs.com -> @profoundry-us/highball -> Settings ->
 # Trusted publisher -> GitHub Actions, naming this repo
-# (profoundry-us/highball-runner) and this workflow filename (publish.yml).
+# (profoundry-us/highball) and this workflow filename (publish.yml).
 #
 # The publish step is skipped when the version already exists, so a partial
 # failure is safe to re-run via workflow_dispatch.

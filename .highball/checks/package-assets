@@ -1,0 +1,20 @@
+#!/bin/sh
+# Fails when `npm pack` would ship without a file the runtime needs.
+# Mirrors the check in .github/workflows/publish.yml so the mistake is
+# caught on the developer's machine, not at the tag.
+set -e
+
+files=$(npm pack --dry-run --json 2>/dev/null | node -e '
+  let d = "";
+  process.stdin.on("data", (c) => d += c).on("end", () =>
+    console.log(JSON.parse(d)[0].files.map((f) => f.path).join("\n")));
+')
+
+status=0
+for required in bin/highball.js lib/mcp.js lib/run.js assets/dashboard.html README.md ONBOARDING.md; do
+  if ! printf '%s\n' "$files" | grep -qx "$required"; then
+    echo "missing from the package: $required"
+    status=1
+  fi
+done
+exit $status

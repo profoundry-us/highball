@@ -51,6 +51,15 @@ npx @profoundry-us/highball init    # scaffolds checks.yml + Claude Code hooks
 is no login step: the only credential Highball takes is a PostHog project
 key, which is write-only by design and lives in committed config.
 
+The fast hook matches `Write|Edit|Bash` and runs `--fast --if-changed`.
+Agents in auto mode edit through Bash — `sed`, heredocs, scripts — so a hook
+on the edit tools alone never fires for them (one repo here went two weeks
+with zero fast runs that way while full runs kept landing). Matching Bash
+too would run the fast rules after every command, most of them reads, so
+`--if-changed` fingerprints the working tree (HEAD plus each dirty path's
+size and mtime) and exits at once when nothing moved since the last run.
+Older installs: change the matcher and add the flag by hand.
+
 ## checks.yml
 
 ```yaml

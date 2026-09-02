@@ -5,7 +5,6 @@
 // the failure output back".
 import { run } from "../lib/run.js";
 import { init } from "../lib/init.js";
-import { login } from "../lib/login.js";
 import { onboard } from "../lib/onboard.js";
 import { runs } from "../lib/runs.js";
 import { mcp } from "../lib/mcp.js";
@@ -20,16 +19,13 @@ Usage:
                             --fast runs only rules marked fast: true.
   highball init             Scaffold .highball/checks.yml and Claude Code
                             hooks in the current repo.
-  highball login            Store a project token in
-                            ~/.highball/credentials.json. Reads the token
-                            from stdin with --token-stdin (recommended).
   highball onboard          Print the setup guide written for this repo's
                             AI agent — tell your agent to run this and
                             follow it.
   highball runs [n]         Local run history (newest first) from
-                            ~/.highball/runs — no dashboard needed.
-                            With a number, that run's detail; add
-                            --logs for every rule's captured output.
+                            ~/.highball/runs. With a number, that run's
+                            detail; add --logs for every rule's captured
+                            output.
   highball mcp              Serve run history over MCP (stdio), with an
                             MCP Apps dashboard widget for hosts that
                             render them (e.g. Claude Desktop).
@@ -41,9 +37,6 @@ switch (command) {
     break;
   case "init":
     process.exit(await init(args));
-    break;
-  case "login":
-    process.exit(await login(args));
     break;
   case "onboard":
     process.exit(await onboard(args));

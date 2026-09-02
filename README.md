@@ -1,14 +1,16 @@
 # @profoundry-us/highball
 
-The Highball runner: executes a repo's `.highball/checks.yml` rules, blocks AI
-coding agents on failure (exit 2, the Claude Code hook contract), and reports
-every run to a Highball dashboard — think "local CI for AI agents": the checks
-run and enforce on your machine while the dashboard records what happened.
-Enforcement stays local; Highball is the witness and system of record — the
-runner never uploads code, only pass/fail plus log tails. It reports to a
-Highball dashboard, to PostHog, or to both. Reporting is always
-best-effort: no token or no reachable dashboard means checks still run and
-block, they just aren't recorded.
+The Highball runner: executes a repo's `.highball/checks.yml` rules and blocks
+AI coding agents on failure (exit 2, the Claude Code hook contract) — "local
+CI for AI agents". Enforcement is entirely local and needs no account, no
+network, and no configuration beyond `checks.yml`.
+
+Runs can optionally be reported to PostHog for team-wide visibility. That is
+the witness half, and it is deliberately somebody else's server: you point at
+your own PostHog project, so Highball never takes custody of your data. The
+runner never uploads code — only rule ids, pass/fail, durations, and a
+one-line summary of a failure. Reporting is always best-effort: an unreachable
+endpoint means checks still run and still block, they just aren't recorded.
 
 ## Install
 
@@ -35,21 +37,19 @@ installing the package, tell the repo's Claude Code agent:
 
 [ONBOARDING.md](ONBOARDING.md) (which that command prints) walks the agent
 through surveying the repo's real toolchain, scaffolding, writing rules that
-reflect what the repo already trusts, handing the credentials step to the
-human, and verifying all four proofs — including that exit 2 actually blocks.
+reflect what the repo already trusts, and verifying all four proofs —
+including that exit 2 actually blocks.
 
 The pieces, for reference or manual setup:
 
 ```bash
 npx @profoundry-us/highball init    # scaffolds checks.yml + Claude Code hooks
-npx @profoundry-us/highball login   # stores a project token (once per machine)
 ```
 
 `init` never overwrites an existing `checks.yml` and never edits an existing
-`.claude/settings.json` (it prints the hook snippet to merge by hand).
-`login` writes `~/.highball/credentials.json` (host → project → token, 0600);
-pipe the token via `--token-stdin` to keep it out of shell history. CI uses
-`HIGHBALL_URL` / `HIGHBALL_TOKEN` env vars instead.
+`.claude/settings.json` (it prints the hook snippet to merge by hand). There
+is no login step: the only credential Highball takes is a PostHog project
+key, which is write-only by design and lives in committed config.
 
 ## checks.yml
 
@@ -128,19 +128,18 @@ Three properties are enforced by the runner rather than left to each repo:
 Rubrics live with the opinions they express: a framework pack such as
 `@profoundry-us/highball-rails` ships them, and the runner supplies the engine.
 
-## Reporting to PostHog
+## Reporting to PostHog (optional)
 
-`reporting.posthog` sends the same runs to PostHog instead of (or alongside)
-a Highball dashboard, so a team that already runs PostHog needs no server for
-this. A PostHog project key is write-only by design, so unlike the dashboard
-token it is committed config — there is no `login` step and no credentials
-file. `HIGHBALL_POSTHOG_KEY` / `HIGHBALL_POSTHOG_HOST` (or `POSTHOG_API_KEY` /
-`POSTHOG_HOST`) override it for CI.
+`reporting.posthog` sends runs to PostHog — the runner's only telemetry path.
+A team that already runs PostHog needs no server for this, and a team that
+doesn't can skip the block entirely and use the local journal. The project key
+is write-only by design, so it is committed config: no login step, no
+credentials file. `HIGHBALL_POSTHOG_KEY` / `HIGHBALL_POSTHOG_HOST` (or
+`POSTHOG_API_KEY` / `POSTHOG_HOST`) override it for CI.
 
-The whole run leaves in ONE request to `/batch/`. The dashboard protocol opens
-a run, POSTs each result, then PATCHes the status — twenty round trips for an
-eighteen-rule run. PostHog events are immutable, which suits a runner that
-already defers reporting to after the checks finish.
+The whole run leaves in ONE request to `/batch/`. PostHog events are
+immutable, which suits a runner that already defers reporting to after the
+checks finish.
 
 Two event types per run:
 
@@ -204,17 +203,18 @@ plays the host role against the real `assets/dashboard.html` and live
 journal data, so widget edits are a reload away instead of a Claude
 Desktop restart.
 
-## Run history without a dashboard
+## Run history, with no telemetry at all
 
-Every run also appends to a local journal (`~/.highball/runs/<project>.jsonl`,
+Every run appends to a local journal (`~/.highball/runs/<project>.jsonl`,
 pruned to the last 200) — unconditionally, whether or not reporting is
 configured. `npx @profoundry-us/highball runs` lists recent runs; adding a
 number shows one run's detail with failure output, and `--logs` prints every
-rule's captured output, GitHub-Actions-style — the journal keeps the last
-10KB per rule, pass or fail, while the dashboard receives failure tails
-only. So the runner is self-sufficient out of the box: the hosted
-dashboard adds team visibility, history beyond your machine, and
-attribution — it's never required to see what happened.
+rule's captured output, GitHub-Actions-style.
+
+The journal is the richer of the two records: it keeps the last 10KB per rule
+pass or fail, while PostHog gets a one-line summary and no logs at all. So the
+runner is fully self-sufficient with no `reporting:` block — PostHog adds
+cross-developer trends, not visibility you'd otherwise lack.
 
 ## Roadmap
 

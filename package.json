@@ -12,11 +12,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/profoundry-us/highball-runner.git"
+    "url": "git+https://github.com/profoundry-us/highball.git"
   },
-  "homepage": "https://github.com/profoundry-us/highball-runner#readme",
+  "homepage": "https://github.com/profoundry-us/highball#readme",
   "bugs": {
-    "url": "https://github.com/profoundry-us/highball-runner/issues"
+    "url": "https://github.com/profoundry-us/highball/issues"
   },
   "type": "module",
   "bin": {

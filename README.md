@@ -25,7 +25,7 @@ From a local tarball (pre-release):
 
 ```bash
 npm pack                                   # in this repo → profoundry-us-highball-<v>.tgz
-npm install --save-dev ../highball-runner/profoundry-us-highball-<v>.tgz
+npm install --save-dev ../highball/profoundry-us-highball-<v>.tgz
 ```
 
 ## Setup: let the repo's own agent do it

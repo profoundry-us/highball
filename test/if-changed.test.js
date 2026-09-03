@@ -71,6 +71,20 @@ test("--if-changed runs once per working-tree state", () => {
   assert.equal(journaledRuns(home), 3);
 });
 
+// Git worktrees and parallel clones share a project name. A run in one must
+// never let the other skip: the stamp is per checkout, not per project.
+test("stamps are per checkout, so a second clone of the same project runs on its own", () => {
+  const a = fixtureRepo();
+  const b = fixtureRepo();
+  const home = mkdtempSync(join(tmpdir(), "hb-home-"));
+
+  assert.match(runFast(a, home), /Instant rule/);
+  assert.match(runFast(b, home), /Instant rule/, "clone b must not inherit clone a's stamp");
+  assert.match(runFast(a, home), /skipped/);
+  assert.match(runFast(b, home), /skipped/);
+  assert.equal(journaledRuns(home), 2);
+});
+
 test("treeFingerprint is null outside a git repo, so --if-changed never skips there", () => {
   assert.equal(treeFingerprint(mkdtempSync(join(tmpdir(), "hb-nogit-"))), null);
 });

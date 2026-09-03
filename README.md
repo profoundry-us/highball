@@ -140,9 +140,24 @@ Rubrics live with the opinions they express: a framework pack such as
 `reporting.posthog` sends runs to PostHog — the runner's only telemetry path.
 A team that already runs PostHog needs no server for this, and a team that
 doesn't can skip the block entirely and use the local journal. The project key
-is write-only by design, so it is committed config: no login step, no
-credentials file. `HIGHBALL_POSTHOG_KEY` / `HIGHBALL_POSTHOG_HOST` (or
-`POSTHOG_API_KEY` / `POSTHOG_HOST`) override it for CI.
+is write-only by design — it is the same key PostHog has you ship in browser
+bundles, and all it can do is capture events — so committing it is safe:
+no login step, no credentials file.
+
+If you would still rather keep it out of the repo, set the environment
+instead. `HIGHBALL_POSTHOG_KEY` (or `POSTHOG_API_KEY`) on its own turns
+reporting on with no `reporting:` block at all, and `HIGHBALL_POSTHOG_HOST`
+(or `POSTHOG_HOST`) points it at an EU or self-hosted instance; either wins
+over committed config, which is also how CI redirects a run. One place that
+reaches every repo's hooks is the `env` block of your user-level Claude Code
+settings, `~/.claude/settings.json`:
+
+```json
+{ "env": { "HIGHBALL_POSTHOG_KEY": "phc_your_key" } }
+```
+
+The trade-off is that reporting is then per machine rather than per repo: a
+teammate cloning the repo reports nothing until they set the key too.
 
 The whole run leaves in ONE request to `/batch/`. PostHog events are
 immutable, which suits a runner that already defers reporting to after the

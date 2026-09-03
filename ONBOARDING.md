@@ -151,11 +151,18 @@ Decision rules:
 Highball enforces with no account and no network. Reporting is a separate,
 optional decision, and it is your human's to make — ask, do not assume.
 
-If they want it, they add a `reporting.posthog` block to `checks.yml` with
-their PostHog host and project key. That key is write-only by design (it is
-the same one that ships in client-side web bundles), so it is committed
-config, not a secret — there is no login step and no credentials file. If
-they would rather not send anything anywhere, skip the block: the local
+If they want it, there are two ways, and the choice is theirs:
+
+- **Committed:** a `reporting.posthog` block in `checks.yml` with their
+  PostHog host and project key. That key is write-only by design (it is the
+  same one that ships in client-side web bundles), so it is committed
+  config, not a secret — there is no login step and no credentials file.
+- **Per machine:** `HIGHBALL_POSTHOG_KEY` in the environment, with no block
+  in `checks.yml` at all. The `env` block of `~/.claude/settings.json`
+  reaches every repo's hooks. Your human sets this themselves; never ask
+  for the key value or write it anywhere.
+
+If they would rather not send anything anywhere, skip both: the local
 journal (`highball runs`) already records every run in more detail than
 PostHog receives.
 

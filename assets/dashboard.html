@@ -194,6 +194,7 @@
     }
     app.innerHTML =
       header("Highball — pick a project", "") +
+      `<div class="group">no .highball/checks.yml in the current repo, so nothing is shown by default</div>` +
       `<div class="empty" style="padding:10px 6px">` +
       projects.map((slug) => `<button data-project="${esc(slug)}" style="margin:0 4px">${esc(slug)}</button>`).join("") +
       `</div>`;
@@ -225,8 +226,14 @@
         <span class="meta">${esc(tally(run.results))}</span>
       </div>`;
     }).join("");
+    // Say up front when the list is cut short — the host's own history
+    // may be much longer than what the widget shows.
+    const scope = sc.total > sc.runs.length
+      ? `<div class="group" style="font-style:normal">showing the last ${sc.runs.length} of ${sc.total} runs` +
+        ` &middot; raise with <span class="mono">runs_limit</span> in checks.yml or <span class="mono">HIGHBALL_RUNS_LIMIT</span></div>`
+      : "";
     app.innerHTML =
-      header(`Highball · ${esc(sc.project)}`, rerunButtons()) +
+      header(`Highball · ${esc(sc.project)}`, rerunButtons()) + scope +
       (rows || `<div class="empty">No runs recorded yet.</div>`);
     app.querySelectorAll(".row").forEach((el) =>
       el.addEventListener("click", () =>

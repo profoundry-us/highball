@@ -46,10 +46,13 @@
   const slugs = Object.keys(window.DEMO_DATA);
   let project = slugs[0];
 
+  const LIMIT = 25; // mirrors DEFAULT_RUNS_LIMIT in lib/mcp.js
   const listPayload = (slug) => ({
     project: slug,
     dir: "/dev/harness/" + slug, // non-null so the re-run buttons render
-    runs: window.DEMO_DATA[slug].map((run) => ({
+    total: window.DEMO_DATA[slug].length,
+    limit: LIMIT,
+    runs: window.DEMO_DATA[slug].slice(0, LIMIT).map((run) => ({
       ...run,
       results: run.results.map(({ id, name, status, duration_ms }) =>
         ({ id, name, status, duration_ms }))

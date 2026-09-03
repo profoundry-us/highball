@@ -17,7 +17,10 @@ Usage:
   highball run [--fast]     Run this repo's .highball/checks.yml rules.
                             Exits 2 on failure (blocks Claude Code hooks).
                             --fast runs only rules marked fast: true.
-  highball init             Scaffold .highball/checks.yml and Claude Code
+                            --if-changed skips when the working tree is
+                            unchanged since the last run (for hooks that
+                            also match Bash).
+  highball init            Scaffold .highball/checks.yml and Claude Code
                             hooks in the current repo.
   highball onboard          Print the setup guide written for this repo's
                             AI agent — tell your agent to run this and

@@ -1,7 +1,7 @@
 {
   "name": "@profoundry-us/highball",
-  "version": "0.4.1",
-  "description": "Highball runner — local CI for AI coding agents: runs a repo's .highball/checks.yml rules, blocks the agent on failure, and reports runs to a Highball dashboard.",
+  "version": "0.5.0",
+  "description": "Highball runner — local CI for AI coding agents: runs a repo's .highball/checks.yml rules, blocks the agent on failure, and optionally reports runs to PostHog.",
   "keywords": [
     "ai",
     "claude-code",

@@ -1,0 +1,19 @@
+# Highball's own rules — the runner checks itself. `fast: true` rules run
+# after every agent edit, and after any Bash command that changed the
+# working tree; the rest join at turn end.
+version: 1
+project: highball
+
+checks:
+  - id: tests
+    name: Unit tests
+    run: npm test --silent
+    fast: true
+
+  # Same proof the publish workflow makes before it will ship a tag: the
+  # MCP server reads assets/dashboard.html at runtime, so a files
+  # whitelist that drops it produces a package that installs fine and
+  # then fails the moment a host asks for the widget.
+  - id: package-assets
+    name: The tarball carries its runtime assets
+    run: .highball/checks/package-assets

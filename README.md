@@ -51,17 +51,24 @@ npx @profoundry-us/highball init    # scaffolds checks.yml + Claude Code hooks
 is no login step: the only credential Highball takes is a PostHog project
 key, which is write-only by design and lives in committed config.
 
+The fast hook matches `Write|Edit|Bash` and runs `--fast --if-changed`.
+Agents in auto mode edit through Bash — `sed`, heredocs, scripts — so a hook
+on the edit tools alone never fires for them (one repo here went two weeks
+with zero fast runs that way while full runs kept landing). Matching Bash
+too would run the fast rules after every command, most of them reads, so
+`--if-changed` fingerprints the working tree (HEAD plus each dirty path's
+size and mtime) and exits at once when nothing moved since the last run.
+Older installs: change the matcher and add the flag by hand.
+
 ## checks.yml
 
 ```yaml
 version: 1
 project: my-app
+# runs_limit: 25   # rows the MCP widget / list_runs return; HIGHBALL_RUNS_LIMIT overrides
 
+# Optional. Omit the block entirely to keep runs in the local journal only.
 reporting:
-  url: https://highball.example.com   # per-team, not a secret — committed
-
-  # Optional second sink, independent of the one above. Either, both, or
-  # neither may be configured.
   posthog:
     host: https://us.i.posthog.com    # EU cloud or self-hosted also fine
     project_key: phc_xxx              # write-only by design — committed
@@ -193,6 +200,18 @@ from the registry rather than a local install:
 The journal it reads is machine-global (`~/.highball/runs/`), so one
 registration covers every repo on that machine — there is no per-repo MCP
 setup.
+
+Which project the widget shows is never guessed. Hosts spawn the server with
+no useful working directory (Claude Desktop and Claude Code both use `/`), so
+`list_runs` resolves the project from its `project` or `dir` argument, a
+`.highball/checks.yml` at the server's cwd, or the client's MCP roots. When
+none of those names a repo it returns the journaled projects for the widget
+to offer as a picker, rather than showing whichever repo happened to run most
+recently. An agent calling from inside a repo should pass `dir`.
+
+`list_runs` returns the newest 25 runs, and the widget says so at the top.
+Change it per call with `limit`, per machine with `HIGHBALL_RUNS_LIMIT`, or
+per repo with `runs_limit:` in checks.yml.
 
 The split is capability-driven, not guesswork: the server reads the
 client's initialize capabilities (`io.modelcontextprotocol/ui`) — hosts

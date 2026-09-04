@@ -106,7 +106,8 @@ analyzers and need no git in their execution context.
 ## Turning it off
 
 Two switches, because "this repo doesn't use Highball" and "get out of my way
-for the next hour" are different requests:
+for the next hour" are different requests. Which one you want depends less on
+how permanent it is than on **when it takes effect** — see below:
 
 ```yaml
 enabled: false            # in checks.yml — committed, applies to everyone
@@ -120,19 +121,26 @@ Either one makes `highball run` exit 0 immediately, with no rule executed, no
 journal entry, and nothing reported. Hooks and rules stay exactly where they
 are, so switching back on is a one-line revert.
 
-Reach for the environment variable for anything temporary. It needs no file
-edit, it can't be committed at a teammate by accident, and it is checked
-before `checks.yml` is even read — so it still works when the config itself
-is what's broken. `enabled: false` is the deliberate, reviewable one: it
-lands in a diff, which is what you want when a repo is genuinely stepping
-away from its checks.
+Nothing is stored for either switch, but they are picked up very differently,
+and the difference is the whole basis for choosing:
 
-Nothing is stored for either switch. `HIGHBALL_DISABLED` is read from the
-environment at the top of every single `highball run`, so unsetting it re-arms
-the checks immediately with no state to clean up — and because it is an
-ordinary environment variable, a hook only sees it if the Claude Code process
-running that hook inherited it. Exporting it in a terminal does not reach a
-session that was already running.
+| | takes effect | scope |
+| --- | --- | --- |
+| `enabled: false` | **next run** — `checks.yml` is re-read from disk on every run, and every hook invocation is a new process | one repo, everyone who clones it |
+| `HIGHBALL_DISABLED` | **next Claude Code restart**, for hooks; immediately for `highball run` you type yourself | every repo, your machine only |
+
+So to flip a repo's checks on and off *while an agent session is running*,
+edit `checks.yml`. That is the live one. Toggling it needs no restart and
+leaves no state behind in either direction.
+
+`HIGHBALL_DISABLED` is an ordinary environment variable, so a hook sees
+whatever value the Claude Code process had when it started — Claude Code
+writes settings `env` entries into its environment at launch, and a shell
+`export` after that never reaches an already-running session. That makes it
+the right switch for a machine-wide default you rarely change, and the wrong
+one for a mid-session toggle. Its real advantages are elsewhere: it can't be
+committed at a teammate by accident, and it is read *before* `checks.yml`, so
+it still works when the config is itself what's broken.
 
 `HIGHBALL_DISABLED=0`, `false`, `no`, `off` and empty all mean **not**
 disabled. Anything else disables. Plain truthiness would make `=0` stop every

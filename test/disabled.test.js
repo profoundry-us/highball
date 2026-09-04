@@ -74,6 +74,24 @@ test("HIGHBALL_DISABLED works even when checks.yml is unloadable", () => {
   assert.match(output, /disabled by HIGHBALL_DISABLED/);
 });
 
+// Plain truthiness would make HIGHBALL_DISABLED=0 stop every check, which is
+// the opposite of what anyone typing 0 means.
+test("falsey spellings of HIGHBALL_DISABLED leave the checks running", () => {
+  for (const value of [ "0", "false", "FALSE", "no", "off", "", " 0 " ]) {
+    const dir = fixtureRepo();
+    runFast(dir, { HIGHBALL_DISABLED: value });
+    assert.equal(ranChecks(dir), true, `HIGHBALL_DISABLED=${JSON.stringify(value)} should not disable`);
+  }
+});
+
+test("truthy spellings of HIGHBALL_DISABLED all disable", () => {
+  for (const value of [ "1", "true", "yes", "on", "whatever" ]) {
+    const dir = fixtureRepo();
+    runFast(dir, { HIGHBALL_DISABLED: value });
+    assert.equal(ranChecks(dir), false, `HIGHBALL_DISABLED=${JSON.stringify(value)} should disable`);
+  }
+});
+
 // `enabled: no` is the string "no" under YAML 1.2, and `enabled: "false"` is
 // a string — both truthy. Failing loudly beats running checks the author
 // believed were switched off.

@@ -127,6 +127,18 @@ is what's broken. `enabled: false` is the deliberate, reviewable one: it
 lands in a diff, which is what you want when a repo is genuinely stepping
 away from its checks.
 
+Nothing is stored for either switch. `HIGHBALL_DISABLED` is read from the
+environment at the top of every single `highball run`, so unsetting it re-arms
+the checks immediately with no state to clean up — and because it is an
+ordinary environment variable, a hook only sees it if the Claude Code process
+running that hook inherited it. Exporting it in a terminal does not reach a
+session that was already running.
+
+`HIGHBALL_DISABLED=0`, `false`, `no`, `off` and empty all mean **not**
+disabled. Anything else disables. Plain truthiness would make `=0` stop every
+check in the repo, which is exactly the "is the guardrail live right now?"
+doubt this switch exists to remove.
+
 Neither switch is silent. Both print a line on every run, because a guardrail
 that has quietly stopped guarding is worse than no guardrail — the next
 person reads green and believes it. For the same reason `enabled:` accepts

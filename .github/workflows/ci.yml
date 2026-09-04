@@ -1,0 +1,42 @@
+# Runs the suite on every pull request and every push to main.
+#
+# Until now the only workflow here was publish.yml, which fires on a release
+# tag — so a broken merge was caught by whoever pulled it next, and the tests
+# that guarded a PR were whichever ones the author happened to run locally
+# (via this repo's own Highball hooks, on their machine, in their Node).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A second push to a PR makes the first run's answer irrelevant.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor package.json claims, and the version publish.yml ships
+        # from. Anything in between is interpolation; those two are promises.
+        node: ['18', '22']
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test

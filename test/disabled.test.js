@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, execFileSync as run } from "node:child_process";
-import { mkdtempSync, mkdirSync, existsSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -52,6 +52,72 @@ test("enabled: true is the same as saying nothing", () => {
   const dir = fixtureRepo("enabled: true");
   runFast(dir);
   assert.equal(ranChecks(dir), true);
+});
+
+const marker = (dir) => join(dir, ".highball", "disabled");
+
+test(".highball/disabled turns off just this checkout", () => {
+  const dir = fixtureRepo();
+  writeFileSync(marker(dir), "");
+
+  const output = runFast(dir);
+  assert.match(output, /disabled by \.highball\/disabled/);
+  assert.equal(ranChecks(dir), false);
+});
+
+// The point of a file switch over the environment variable: it is re-read
+// every run, so it toggles inside a live agent session with no restart.
+test("the marker toggles both ways with no restart and no leftover state", () => {
+  const dir = fixtureRepo();
+
+  runFast(dir);
+  assert.equal(ranChecks(dir), true, "no marker: checks run");
+
+  rmSync(join(dir, "ran.marker"));
+  writeFileSync(marker(dir), "");
+  runFast(dir);
+  assert.equal(ranChecks(dir), false, "marker added: skipped on the very next run");
+
+  rmSync(marker(dir));
+  runFast(dir);
+  assert.equal(ranChecks(dir), true, "marker removed: re-armed on the very next run");
+});
+
+// Whoever finds the checks off a week later deserves to know why.
+test("text in the marker is echoed back as the reason", () => {
+  const dir = fixtureRepo();
+  writeFileSync(marker(dir), "bisecting a flaky test\nsecond line ignored\n");
+
+  assert.match(runFast(dir), /disabled by \.highball\/disabled \(bisecting a flaky test\)/);
+});
+
+test("the marker works even when checks.yml is unloadable", () => {
+  const dir = mkdtempSync(join(tmpdir(), "hb-disabled-"));
+  mkdirSync(join(dir, ".highball"));
+  writeFileSync(join(dir, ".highball", "checks.yml"), "project: broken\n");
+  writeFileSync(marker(dir), "");
+
+  assert.match(runFast(dir), /disabled by \.highball\/disabled/);
+});
+
+// A switch-off that ships to everyone is the failure this file switch exists
+// to avoid, so the ignore rule has to arrive with the scaffold, not with a
+// setup step someone has to remember.
+test("init ships the .gitignore that keeps the marker local", () => {
+  const dir = mkdtempSync(join(tmpdir(), "hb-init-"));
+  execFileSync("git", [ "init", "-q" ], { cwd: dir });
+  run(process.execPath, [ CLI, "init" ], { cwd: dir, encoding: "utf8" });
+
+  assert.match(
+    readFileSync(join(dir, ".highball", ".gitignore"), "utf8"),
+    /^disabled$/m
+  );
+
+  writeFileSync(marker(dir), "");
+  const tracked = run("git", [ "status", "--porcelain", "--untracked-files=all" ], {
+    cwd: dir, encoding: "utf8"
+  });
+  assert.doesNotMatch(tracked, /disabled/, "the marker must not show up as a file to commit");
 });
 
 test("HIGHBALL_DISABLED turns it off per machine, with nothing committed", () => {

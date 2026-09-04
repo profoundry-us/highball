@@ -105,49 +105,65 @@ analyzers and need no git in their execution context.
 
 ## Turning it off
 
-Two switches, because "this repo doesn't use Highball" and "get out of my way
-for the next hour" are different requests. Which one you want depends less on
-how permanent it is than on **when it takes effect** — see below:
+Three switches, differing in who they affect and — the part that usually
+decides it — when they take effect:
+
+```bash
+touch .highball/disabled       # this checkout, gitignored, next run
+```
 
 ```yaml
-enabled: false            # in checks.yml — committed, applies to everyone
+enabled: false                 # in checks.yml — committed, everyone, next run
 ```
 
 ```bash
-export HIGHBALL_DISABLED=1   # your machine only, nothing to commit
+export HIGHBALL_DISABLED=1     # your whole machine, next session restart
 ```
 
-Either one makes `highball run` exit 0 immediately, with no rule executed, no
+Any of them makes `highball run` exit 0 immediately, with no rule executed, no
 journal entry, and nothing reported. Hooks and rules stay exactly where they
 are, so switching back on is a one-line revert.
 
-Nothing is stored for either switch, but they are picked up very differently,
-and the difference is the whole basis for choosing:
+| | takes effect | scope | committed |
+| --- | --- | --- | --- |
+| `.highball/disabled` | next run | this checkout | no — `init` gitignores it |
+| `enabled: false` | next run | one repo, everyone who clones it | yes |
+| `HIGHBALL_DISABLED` | next Claude Code restart, for hooks | every repo, your machine | no |
 
-| | takes effect | scope |
-| --- | --- | --- |
-| `enabled: false` | **next run** — `checks.yml` is re-read from disk on every run, and every hook invocation is a new process | one repo, everyone who clones it |
-| `HIGHBALL_DISABLED` | **next Claude Code restart**, for hooks; immediately for `highball run` you type yourself | every repo, your machine only |
+**Reach for the marker file first.** `touch .highball/disabled` while an agent
+session is running and the very next hook run skips; delete it and the run
+after that is armed again. Both directions are live because the file is
+checked on every run and every hook invocation is a new process — there is no
+state anywhere and nothing to restart. `init` writes a `.highball/.gitignore`
+alongside it, so a switch-off in your checkout can't ride along in a commit.
 
-So to flip a repo's checks on and off *while an agent session is running*,
-edit `checks.yml`. That is the live one. Toggling it needs no restart and
-leaves no state behind in either direction.
+Anything you write into the marker comes back as the reason on every run,
+which is what the person who finds the checks off next week actually needs:
+
+```console
+$ echo "bisecting a flaky spec" > .highball/disabled
+$ npx @profoundry-us/highball run --fast
+highball: disabled by .highball/disabled (bisecting a flaky spec) — no checks run
+```
+
+`enabled: false` is the committed counterpart, for a repo genuinely stepping
+away from its checks. It lands in a diff, which is what you want when the
+decision belongs to the team rather than to your afternoon.
 
 `HIGHBALL_DISABLED` is an ordinary environment variable, so a hook sees
 whatever value the Claude Code process had when it started — Claude Code
 writes settings `env` entries into its environment at launch, and a shell
 `export` after that never reaches an already-running session. That makes it
 the right switch for a machine-wide default you rarely change, and the wrong
-one for a mid-session toggle. Its real advantages are elsewhere: it can't be
-committed at a teammate by accident, and it is read *before* `checks.yml`, so
-it still works when the config is itself what's broken.
+one for a mid-session toggle. Like the marker, it is read *before*
+`checks.yml`, so both still work when the config is itself what's broken.
 
 `HIGHBALL_DISABLED=0`, `false`, `no`, `off` and empty all mean **not**
 disabled. Anything else disables. Plain truthiness would make `=0` stop every
 check in the repo, which is exactly the "is the guardrail live right now?"
 doubt this switch exists to remove.
 
-Neither switch is silent. Both print a line on every run, because a guardrail
+None of the three is silent. Each prints a line on every run, because a guardrail
 that has quietly stopped guarding is worse than no guardrail — the next
 person reads green and believes it. For the same reason `enabled:` accepts
 only a real boolean: `enabled: "false"` and `enabled: no` are strings, and

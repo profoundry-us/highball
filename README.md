@@ -103,6 +103,48 @@ The runner computes the branch's changed-file list once (it owns git) and
 hands it to every rule via `HIGHBALL_CHANGED_FILES` — check scripts stay pure
 analyzers and need no git in their execution context.
 
+## Turning it off
+
+Two switches, because "this repo doesn't use Highball" and "get out of my way
+for the next hour" are different requests:
+
+```yaml
+enabled: false            # in checks.yml — committed, applies to everyone
+```
+
+```bash
+export HIGHBALL_DISABLED=1   # your machine only, nothing to commit
+```
+
+Either one makes `highball run` exit 0 immediately, with no rule executed, no
+journal entry, and nothing reported. Hooks and rules stay exactly where they
+are, so switching back on is a one-line revert.
+
+Reach for the environment variable for anything temporary. It needs no file
+edit, it can't be committed at a teammate by accident, and it is checked
+before `checks.yml` is even read — so it still works when the config itself
+is what's broken. `enabled: false` is the deliberate, reviewable one: it
+lands in a diff, which is what you want when a repo is genuinely stepping
+away from its checks.
+
+Nothing is stored for either switch. `HIGHBALL_DISABLED` is read from the
+environment at the top of every single `highball run`, so unsetting it re-arms
+the checks immediately with no state to clean up — and because it is an
+ordinary environment variable, a hook only sees it if the Claude Code process
+running that hook inherited it. Exporting it in a terminal does not reach a
+session that was already running.
+
+`HIGHBALL_DISABLED=0`, `false`, `no`, `off` and empty all mean **not**
+disabled. Anything else disables. Plain truthiness would make `=0` stop every
+check in the repo, which is exactly the "is the guardrail live right now?"
+doubt this switch exists to remove.
+
+Neither switch is silent. Both print a line on every run, because a guardrail
+that has quietly stopped guarding is worse than no guardrail — the next
+person reads green and believes it. For the same reason `enabled:` accepts
+only a real boolean: `enabled: "false"` and `enabled: no` are strings, and
+rather than leaving checks quietly on, they fail loudly.
+
 ## AI-judged rules
 
 A rule with `rubric:` instead of `run:` is judged by headless Claude rather

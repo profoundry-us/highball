@@ -20,7 +20,10 @@ Usage:
                             --if-changed skips when the working tree is
                             unchanged since the last run (for hooks that
                             also match Bash).
-  highball init            Scaffold .highball/checks.yml and Claude Code
+                            Switched off by \`enabled: false\` in
+                            checks.yml (committed, whole team) or
+                            HIGHBALL_DISABLED=1 (just you).
+  highball init             Scaffold .highball/checks.yml and Claude Code
                             hooks in the current repo.
   highball onboard          Print the setup guide written for this repo's
                             AI agent — tell your agent to run this and

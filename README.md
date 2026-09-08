@@ -1,5 +1,7 @@
 # @profoundry-us/highball
 
+**Website:** [highball.profoundry.us](https://highball.profoundry.us)
+
 The Highball runner: executes a repo's `.highball/checks.yml` rules and blocks
 AI coding agents on failure (exit 2, the Claude Code hook contract) — "local
 CI for AI agents". Enforcement is entirely local and needs no account, no

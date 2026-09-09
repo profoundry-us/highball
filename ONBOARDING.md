@@ -16,10 +16,27 @@ yourself.
 
 `npx @profoundry-us/highball --help` must work (Node >= 18, package installed as a dev
 dependency). If it doesn't, ask your human whether to install from the npm
-registry (`npm install --save-dev @profoundry-us/highball`) or from a
-local tarball path they provide. In a repo with no `package.json`, create
-a minimal private one first (`{ "name": "<repo>", "private": true }`) and
-gitignore `node_modules/` if it isn't already.
+registry or from a local tarball path they provide. Install with the package
+manager the repo already uses — the lockfile tells you which, and mixing
+managers leaves two lockfiles that disagree:
+
+| Lockfile present | Install command |
+|---|---|
+| `yarn.lock` | `yarn add -D @profoundry-us/highball` |
+| `pnpm-lock.yaml` | `pnpm add -D @profoundry-us/highball` |
+| `package-lock.json`, or none | `npm install --save-dev @profoundry-us/highball` |
+
+If the install stops with `The engine "node" is incompatible with this
+module`, the repo pins a Node version in its own `engines` field and you are
+running a different one (yarn treats that as a hard error; npm only warns).
+Switch to the pinned version with whatever the repo already uses (`.nvmrc`,
+`.node-version`, `.tool-versions`, `volta`) and retry. Don't pass
+`--ignore-engines` and don't edit the `engines` field — if no version manager
+is set up, ask your human.
+
+In a repo with no `package.json`, create a minimal private one first
+(`{ "name": "<repo>", "private": true }`) and gitignore `node_modules/` if it
+isn't already.
 
 **Never run bare `npx highball` where the package is NOT installed**: the
 unscoped npm name `highball` belongs to an unrelated package, and npx

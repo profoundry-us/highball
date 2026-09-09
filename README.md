@@ -16,7 +16,14 @@ endpoint means checks still run and still block, they just aren't recorded.
 
 ## Install
 
-Published releases: `npm install --save-dev @profoundry-us/highball`.
+Published releases, with whichever package manager the repo's lockfile says
+it uses:
+
+```bash
+yarn add -D @profoundry-us/highball
+npm install --save-dev @profoundry-us/highball
+pnpm add -D @profoundry-us/highball
+```
 
 **Always use the scoped name.** The unscoped npm name `highball` belongs to
 an unrelated package, so a bare `npx highball` — in a committed hook, a

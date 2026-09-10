@@ -5,10 +5,22 @@ version: 1
 project: highball
 
 checks:
+  # The fast lane, scoped to what changed: every changed JS file parses,
+  # and each changed module's own unit tests pass. The end-to-end tests
+  # (which spawn the CLI in fresh git repos) are left to turn end — they
+  # are where the seconds go, and no scoping makes them cheap.
+  - id: changed-tests
+    name: Changed files parse and their unit tests pass
+    run: .highball/checks/tests-for-changed
+    fast: true
+
+  # The whole suite, at turn end. 30s is the budget a small project's full
+  # suite should fit in; this one runs in about five. If it ever needs
+  # more, something in it is hanging, or a test has grown a network call.
   - id: tests
     name: Unit tests
     run: npm test --silent
-    fast: true
+    timeout: 30
 
   # Same proof the publish workflow makes before it will ship a tag: the
   # MCP server reads assets/dashboard.html at runtime, so a files

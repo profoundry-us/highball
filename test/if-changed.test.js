@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { treeFingerprint } from "../lib/stamp.js";
+import { cliEnv } from "./helpers.js";
 
 const CLI = fileURLToPath(new URL("../bin/highball.js", import.meta.url));
 const GIT_ENV = {
@@ -35,7 +36,7 @@ function fixtureRepo() {
 // rather than the developer's real ~/.highball.
 function runFast(dir, home) {
   return execFileSync(process.execPath, [ CLI, "run", "--fast", "--if-changed" ], {
-    cwd: dir, encoding: "utf8", env: { ...process.env, HOME: home }, stdio: [ "ignore", "pipe", "pipe" ]
+    cwd: dir, encoding: "utf8", env: cliEnv({ HOME: home }), stdio: [ "ignore", "pipe", "pipe" ]
   });
 }
 

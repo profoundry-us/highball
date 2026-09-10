@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+// The fast lane: what can be known about the changed files in under two
+// seconds. Every changed JS file is parsed, and each changed module's own
+// unit tests run — `lib/config.js` maps to `test/config*.test.js`, a changed
+// test file runs itself. The end-to-end files (the ones that spawn the CLI
+// in a fresh git repo, a quarter-second a spawn, dozens of spawns) are the
+// full suite's business at turn end: they are where the seconds go, and no
+// scoping makes them cheap.
+//
+// The runner hands over the changed list (ADR 202608); this script never
+// touches git. Nothing changed, or nothing that maps to a test, is a pass.
+import { spawnSync } from "node:child_process";
+import { existsSync, readdirSync } from "node:fs";
+import { basename } from "node:path";
+
+const SLOW = new Set([ "disabled", "if-changed", "run-stdin", "timeout" ]);
+
+const changed = (process.env.HIGHBALL_CHANGED_FILES ?? "")
+  .split("\n").map((line) => line.trim()).filter(Boolean);
+
+const scripts = changed.filter((file) => /\.(m?js)$/.test(file) && existsSync(file));
+const tests = new Set();
+for (const file of changed) {
+  let stem = null;
+  if (/^lib\/[^/]+\.js$/.test(file)) stem = basename(file, ".js");
+  else if (/^test\/[^/]+\.test\.js$/.test(file)) stem = basename(file, ".test.js");
+  if (!stem) continue;
+  for (const candidate of readdirSync("test")) {
+    const match = candidate.match(/^(.+)\.test\.js$/);
+    if (!match) continue;
+    const name = match[1];
+    if ((name === stem || name.startsWith(`${stem}-`)) && !SLOW.has(name) && existsSync(`test/${candidate}`)) {
+      tests.add(`test/${candidate}`);
+    }
+  }
+}
+
+let failed = false;
+if (scripts.length > 0) {
+  for (const file of scripts) {
+    const check = spawnSync(process.execPath, [ "--check", file ], { encoding: "utf8" });
+    if (check.status !== 0) {
+      failed = true;
+      process.stdout.write(`${file} does not parse:\n${check.stderr}`);
+    }
+  }
+  console.log(`parsed ${scripts.length} changed file(s)`);
+}
+if (tests.size > 0) {
+  const files = [ ...tests ].sort();
+  console.log(`unit tests for the changed modules: ${files.join(", ")}`);
+  const run = spawnSync(process.execPath, [ "--test", ...files ], { encoding: "utf8", stdio: [ "ignore", "pipe", "pipe" ] });
+  process.stdout.write(run.stdout + run.stderr);
+  if (run.status !== 0) failed = true;
+} else {
+  console.log("no changed file maps to a unit test — the full suite runs at turn end");
+}
+process.exit(failed ? 1 : 0);

@@ -52,6 +52,8 @@
   .chip.passed { color: var(--green); background: var(--green-bg); }
   .chip.failed { color: var(--red); background: var(--red-bg); }
   .chip.todo { color: var(--muted); background: var(--gray-bg); }
+  .chip.running { color: var(--muted); background: var(--gray-bg); }
+  .chip.killed { color: var(--red); background: var(--red-bg); }
   .mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
   details.rule {
     border: 1px solid var(--line); border-radius: 8px; background: var(--card);
@@ -158,8 +160,21 @@
     if (s < 86400) return `${Math.round(s / 3600)}h ago`;
     return `${Math.round(s / 86400)}d ago`;
   }
-  function chip(status) {
-    return `<span class="chip ${esc(status)}">${esc(status)}</span>`;
+  function chip(status, label = status) {
+    return `<span class="chip ${esc(status)}">${esc(label)}</span>`;
+  }
+  // "running" is a run the journal saw start and not finish — live right
+  // now, or one that died without saying so. "killed" is one the runner
+  // was stopped in the middle of.
+  function runLabel(status) {
+    return status === "passed" ? "✓ passed"
+      : status === "running" ? "… running"
+      : status === "killed" ? "✗ killed"
+      : "✗ failed";
+  }
+  // A failure the runner caused, rather than the rule, says so.
+  function ruleLabel(result) {
+    return result.timed_out ? "timed out" : result.killed ? "killed" : result.status;
   }
   function tally(results) {
     const counts = {};
@@ -217,7 +232,7 @@
       lastGroup = group;
       return heading + `
       <div class="row" data-index="${run.index}">
-        <span class="chip ${esc(run.status)}">${run.status === "passed" ? "✓ passed" : "✗ failed"}</span>
+        <span class="chip ${esc(run.status)}">${runLabel(run.status)}</span>
         <span class="when">${timeAgo(run.started_at)}</span>
         <span class="meta">${run.trigger === "edit" ? "fast" : "full"}</span>
         <span class="mono">${esc(run.branch || "-")}</span>
@@ -252,7 +267,7 @@
         `<span class="glyph ${esc(result.status)}">${result.status === "passed" ? "✓" : result.status === "todo" ? "•" : "✗"}</span>` +
         `<span>${esc(result.name)}</span>` +
         `<span class="spacer"></span>` +
-        chip(result.status) +
+        chip(result.status, ruleLabel(result)) +
         `<span class="meta">${duration}</span>`;
 
       // What the panel can actually show. Quiet rules (the AI judges print

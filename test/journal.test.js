@@ -48,3 +48,21 @@ test("journaledProjects lists project files", () => {
 
   assert.deepEqual(journaledProjects(dir), [ "alpha", "beta" ]);
 });
+
+// The runner writes a run when it starts and again after every rule, all
+// under one id: a run that dies mid-way still shows how far it got, and a
+// finished one is still a single line.
+test("a record with an id replaces its earlier self instead of appending", () => {
+  const dir = mkdtempSync(join(tmpdir(), "hb-journal-"));
+
+  appendRun("demo", { id: "run-1", status: "running", results: [] }, dir);
+  appendRun("demo", { id: "run-1", status: "running", results: [ { id: "a" } ] }, dir);
+  appendRun("demo", { id: "run-2", status: "running", results: [] }, dir);
+  appendRun("demo", { id: "run-1", status: "passed", results: [ { id: "a" }, { id: "b" } ] }, dir);
+
+  const runs = readRuns("demo", dir);
+  assert.equal(runs.length, 2);
+  assert.deepEqual(runs.map((run) => run.id), [ "run-2", "run-1" ], "order is by first appearance, not last write");
+  assert.equal(runs[1].status, "passed");
+  assert.equal(runs[1].results.length, 2);
+});

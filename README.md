@@ -91,10 +91,16 @@ reporting:
 exec:
   via: docker compose exec -T app
 
+# Wall-clock budgets in seconds; a rule past its budget is killed and
+# fails as "timed out". Defaults: fast 8, full 60, judge 300.
+timeouts:
+  full: 120
+
 checks:
   - id: unit-tests
     name: Unit tests
     run: bundle exec rspec spec        # runs through exec.via
+    timeout: 300                       # this rule's own budget
 
   - id: js-syntax
     name: Playback JS parses
@@ -114,6 +120,38 @@ checks:
 The runner computes the branch's changed-file list once (it owns git) and
 hands it to every rule via `HIGHBALL_CHANGED_FILES` — check scripts stay pure
 analyzers and need no git in their execution context.
+
+## Timeouts
+
+Every rule runs under a wall-clock budget. A rule that runs past it is
+killed — the whole process tree, so a hung test runner started by `npm`
+started by a shell doesn't live on after the run has given up on it — and
+fails with the reason:
+
+```
+→ Unit tests ... TIMED OUT (8.0s)
+
+### Unit tests (unit-tests) failed. Fix before finishing:
+…
+highball: timed out after 8s and was killed. Its budget is `timeouts.fast: 8`
+in .highball/checks.yml — raise it there if this rule legitimately needs
+longer, or find what hung.
+```
+
+The defaults are deliberately tight: **8s** for a rule marked `fast: true`,
+**60s** for everything else, **300s** for an AI-judged rule. A fast rule runs
+after every agent edit, and a rule worth that is one that finishes before the
+agent's next thought — 8s is generous for a lint or a grep and far too short
+for a suite, which is the point: a suite marked fast has to earn it with its
+own `timeout:`. Raise a kind for the whole repo with `timeouts:`, or give
+one rule its own `timeout:`; both are seconds. Either way the number is a
+decision in `checks.yml`, not a mystery.
+
+The budget is what turns a hang into evidence. Without one, a rule that never
+returns holds the hook open until Claude Code kills it, and (before 0.7) the
+run was journaled nowhere — "the tests hang sometimes" had nothing to point
+at. The hook timeouts `init` writes are backstops for the runner itself, not
+budgets for rules: they should only ever fire if the runner is wedged.
 
 ## Turning it off
 
@@ -327,6 +365,16 @@ The journal is the richer of the two records: it keeps the last 10KB per rule
 pass or fail, while PostHog gets a one-line summary and no logs at all. So the
 runner is fully self-sufficient with no `reporting:` block — PostHog adds
 cross-developer trends, not visibility you'd otherwise lack.
+
+A run is journaled from the moment it starts, and rewritten after every rule,
+so the record is always as current as the run. A run that ends the ordinary
+way is `passed` or `failed`. One still marked `running` is either live
+right now or died without getting to say so — a crash, a `kill -9`. One
+marked `killed` was stopped in the middle of a rule (Claude Code giving up
+on the hook, a closed terminal, Ctrl-C); the runner took the rule's process
+tree down with it and journaled which rule it was in. A rule that ran past
+its budget is `failed` with `timed_out`. None of these used to leave a
+trace, which is exactly when a trace was needed.
 
 ## Roadmap
 

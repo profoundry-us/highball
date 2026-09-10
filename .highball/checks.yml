@@ -5,10 +5,14 @@ version: 1
 project: highball
 
 checks:
+  # The suite runs 8-15s, past the 8s a fast rule gets by default, so it
+  # carries its own budget. That number is a claim about the suite: if it
+  # ever needs more, something in it is hanging.
   - id: tests
     name: Unit tests
     run: npm test --silent
     fast: true
+    timeout: 60
 
   # Same proof the publish workflow makes before it will ship a tag: the
   # MCP server reads assets/dashboard.html at runtime, so a files

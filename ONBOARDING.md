@@ -144,6 +144,7 @@ checks:
     name: Unit tests (offline)
     run: just test-unit               # orchestrates its own docker exec
     exec: host                        # → must run on the host
+    timeout: 300                      # seconds; the default for a full rule is 60
 
   - id: coverage-ratchet
     name: Coverage never decreases
@@ -162,6 +163,14 @@ Decision rules:
 - The runner exports `HIGHBALL_CHANGED_FILES` (newline-separated,
   repo-relative) to every rule — scripts that want changed-only behavior
   can read it instead of shelling out to git.
+- Every rule runs under a budget and is killed past it: 8s for a `fast`
+  rule, 60s otherwise, 300s for an AI-judged one. Time the repo's test
+  command before you write its rule, and give it an honest `timeout:`
+  (seconds) if it needs more — a suite marked `fast` needs one for sure.
+  Raise a whole kind with a top-level `timeouts:` block (`fast:`,
+  `full:`, `judge:`). A rule that times out fails and says which budget
+  it hit; do not answer that by raising the number without asking your
+  human whether the rule hung.
 
 ## 4. Telemetry — **human**, and optional
 

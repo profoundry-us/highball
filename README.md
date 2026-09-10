@@ -147,6 +147,14 @@ own `timeout:`. Raise a kind for the whole repo with `timeouts:`, or give
 one rule its own `timeout:`; both are seconds. Either way the number is a
 decision in `checks.yml`, not a mystery.
 
+The budgets are kill switches, not targets. The targets, for a small project:
+the fast lane under **2s**, the full suite under **30s**. A fast rule should
+look only at what changed — the runner hands every rule the changed-file
+list in `HIGHBALL_CHANGED_FILES`, so "parse the changed files and run the
+changed modules' own tests" is a short script — and a full suite that can't
+make 30s should scope itself the same way rather than run long. Highball's
+own `.highball/checks/tests-for-changed` is the worked example.
+
 The budget is what turns a hang into evidence. Without one, a rule that never
 returns holds the hook open until Claude Code kills it, and (before 0.7) the
 run was journaled nowhere — "the tests hang sometimes" had nothing to point

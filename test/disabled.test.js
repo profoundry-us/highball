@@ -5,6 +5,7 @@ import { mkdtempSync, mkdirSync, existsSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { cliEnv } from "./helpers.js";
 
 const CLI = fileURLToPath(new URL("../bin/highball.js", import.meta.url));
 const GIT_ENV = {
@@ -35,7 +36,7 @@ function fixtureRepo(extra = "") {
 }
 
 const runFast = (dir, env = {}) => run(process.execPath, [ CLI, "run", "--fast" ], {
-  cwd: dir, encoding: "utf8", env: { ...process.env, HOME: mkdtempSync(join(tmpdir(), "hb-home-")), ...env }
+  cwd: dir, encoding: "utf8", env: cliEnv({ HOME: mkdtempSync(join(tmpdir(), "hb-home-")), ...env })
 });
 
 const ranChecks = (dir) => existsSync(join(dir, "ran.marker"));

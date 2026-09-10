@@ -5,6 +5,7 @@ import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { cliEnv } from "./helpers.js";
 
 const CLI = fileURLToPath(new URL("../bin/highball.js", import.meta.url));
 
@@ -43,6 +44,7 @@ test("run exits promptly when stdin is a pipe nobody closes", async () => {
   const code = await new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [ CLI, "run", "--fast" ], {
       cwd: dir,
+      env: cliEnv(),
       stdio: [ "pipe", "ignore", "ignore" ] // stdin open, never written, never closed
     });
     const timer = setTimeout(() => {

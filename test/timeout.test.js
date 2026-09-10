@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
+import { cliEnv } from "./helpers.js";
 
 const CLI = fileURLToPath(new URL("../bin/highball.js", import.meta.url));
 const GIT_ENV = {
@@ -39,7 +40,7 @@ const freshHome = () => mkdtempSync(join(tmpdir(), "hb-home-"));
 
 const runCli = (dir, home, args = [ "run", "--fast" ]) =>
   spawnSync(process.execPath, [ CLI, ...args ], {
-    cwd: dir, encoding: "utf8", env: { ...process.env, HOME: home },
+    cwd: dir, encoding: "utf8", env: cliEnv({ HOME: home }),
     stdio: [ "ignore", "pipe", "pipe" ]
   });
 
@@ -160,7 +161,7 @@ test("a stopped runner takes the running rule down with it and journals the run 
   const home = freshHome();
 
   const runner = spawn(process.execPath, [ CLI, "run", "--fast" ], {
-    cwd: dir, env: { ...process.env, HOME: home }, stdio: [ "ignore", "pipe", "pipe" ]
+    cwd: dir, env: cliEnv({ HOME: home }), stdio: [ "ignore", "pipe", "pipe" ]
   });
   let stderr = "";
   runner.stderr.setEncoding("utf8");

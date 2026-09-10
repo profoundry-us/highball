@@ -27,7 +27,8 @@
     "lib",
     "assets",
     "README.md",
-    "ONBOARDING.md"
+    "ONBOARDING.md",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=18"

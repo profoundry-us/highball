@@ -22,7 +22,7 @@ on:
         description: 'Existing tag to (re-)publish, e.g. v0.3.0'
 
 permissions:
-  contents: read
+  contents: write # the GitHub release for the tag
   id-token: write # OIDC token for trusted publishing + provenance
 
 jobs:
@@ -87,7 +87,23 @@ jobs:
         if: env.published != 'true'
         run: npm publish --access public --provenance
 
+      # The tag is the release; this gives it a page. Notes are generated
+      # from the merged PRs since the previous tag, and the version on the
+      # website (highball.profoundry.us) links here. Skipped when the release
+      # already exists, so a re-run stays safe.
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${version}"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "release $TAG already exists — leaving it alone."
+          else
+            gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag
+          fi
+
       - name: Summary
         run: |
           echo "## Published v${version}" >> "$GITHUB_STEP_SUMMARY"
           echo "- NPM: https://www.npmjs.com/package/@profoundry-us/highball/v/${version}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release: https://github.com/profoundry-us/highball/releases/tag/v${version}" >> "$GITHUB_STEP_SUMMARY"

@@ -1,6 +1,6 @@
 # @profoundry-us/highball
 
-**Website:** [highball.profoundry.us](https://highball.profoundry.us)
+**Website:** [highball.profoundry.us](https://highball.profoundry.us) · [Getting started](https://highball.profoundry.us/#getting-started)
 
 The Highball runner: executes a repo's `.highball/checks.yml` rules and blocks
 AI coding agents on failure (exit 2, the Claude Code hook contract) — "local
@@ -43,6 +43,9 @@ Highball is installed *by the AI agent that will be checked by it*. After
 installing the package, tell the repo's Claude Code agent:
 
 > Run `npx @profoundry-us/highball onboard` and follow the instructions.
+
+The site's [Getting started](https://highball.profoundry.us/#getting-started)
+section shows this route and the manual one side by side.
 
 [ONBOARDING.md](ONBOARDING.md) (which that command prints) walks the agent
 through surveying the repo's real toolchain, scaffolding, writing rules that

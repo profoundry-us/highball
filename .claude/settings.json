@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node bin/highball.js run",
+            "command": "node bin/highball.js run --if-changed",
             "timeout": 900
           }
         ]

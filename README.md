@@ -70,7 +70,15 @@ with zero fast runs that way while full runs kept landing). Matching Bash
 too would run the fast rules after every command, most of them reads, so
 `--if-changed` fingerprints the working tree (HEAD plus each dirty path's
 size and mtime) and exits at once when nothing moved since the last run.
-Older installs: change the matcher and add the flag by hand.
+
+The Stop hook runs `--if-changed` too, so a turn that edited nothing since
+the last full run skips the suite. The stamp behind the flag is kept per
+kind of run: a fast run never satisfies a full one (the full-only rules
+haven't run), while a full run does satisfy the next fast one (it ran every
+fast rule). An edit therefore always gets its fast run at once and its full
+run at turn end, and a read-only turn pays for neither. A failed full run
+leaves no stamp: a red tree blocks every turn end until something changes.
+Older installs: change the matcher and add the flag to both hooks by hand.
 
 ## checks.yml
 

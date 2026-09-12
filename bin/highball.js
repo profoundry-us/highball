@@ -18,8 +18,9 @@ Usage:
                             Exits 2 on failure (blocks Claude Code hooks).
                             --fast runs only rules marked fast: true.
                             --if-changed skips when the working tree is
-                            unchanged since the last run (for hooks that
-                            also match Bash).
+                            unchanged since the last run of the same kind
+                            (fast or full), so hooks that fire on every
+                            command or every turn end stay cheap.
                             Switched off by .highball/disabled (this
                             checkout, gitignored), \`enabled: false\` in
                             checks.yml (committed, whole team), or

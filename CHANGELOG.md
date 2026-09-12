@@ -8,6 +8,23 @@ Release dates are the day the version was published to npm.
 
 ## [Unreleased]
 
+### Fixed
+
+- `--if-changed` keeps one stamp per kind of run (fast, full) instead of one
+  per checkout. A fast run's stamp used to satisfy the full run that followed
+  it, so in a hooked repo the full-only rules never ran after an edit — the
+  fast hook stamped the tree and the Stop hook skipped. Each run now reads its
+  own stamp. A full run also refreshes the fast one, since it ran every fast
+  rule; a fast run never touches the full one. The full stamp is written only
+  on a pass, so a Stop hook that blocked on a red tree blocks again until the
+  tree moves. (#24)
+
+### Changed
+
+- `init` scaffolds `--if-changed` on the Stop hook as well, so a turn that
+  edited nothing since the last full run skips the suite. Existing installs:
+  add the flag to the Stop hook by hand. (#24)
+
 ## [0.7.0] - 2026-09-10
 
 ### Added

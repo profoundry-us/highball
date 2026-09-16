@@ -63,6 +63,17 @@ npx @profoundry-us/highball init    # scaffolds checks.yml + Claude Code hooks
 is no login step: the only credential Highball takes is a PostHog project
 key, which is write-only by design and lives in committed config.
 
+The hooks call the installed package directly,
+`node node_modules/@profoundry-us/highball/bin/highball.js run ...`, rather
+than `npx`. The fast hook fires after every agent tool call and most of
+those calls skip in a few milliseconds; `npx` on top of a local install
+adds ~180ms to each just to resolve to the same file. A skipped run costs
+about 80ms on a laptop, half of it node's own startup: two git calls, a
+stamp compare, and nothing else — the config isn't parsed and no other
+subcommand is loaded.
+If an existing `checks.yml` has no `fast: true` rule, `init` scaffolds the
+Stop hook only.
+
 The fast hook matches `Write|Edit|Bash` and runs `--fast --if-changed`.
 Agents in auto mode edit through Bash — `sed`, heredocs, scripts — so a hook
 on the edit tools alone never fires for them (one repo here went two weeks

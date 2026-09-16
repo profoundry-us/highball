@@ -3,11 +3,11 @@
 // importable, testable module. `run` owns the process exit code — exit 2
 // is the contract Claude Code hooks read as "block the agent and feed
 // the failure output back".
-import { run } from "../lib/run.js";
-import { init } from "../lib/init.js";
-import { onboard } from "../lib/onboard.js";
-import { runs } from "../lib/runs.js";
-import { mcp } from "../lib/mcp.js";
+//
+// Each subcommand is imported when it is asked for, not up front. The
+// hooks call `run` after every agent tool call, and most of those calls
+// skip; loading the MCP server (and the SDK behind it) for a run that
+// exits in a few milliseconds roughly doubled the cost of every skip.
 
 const [command, ...args] = process.argv.slice(2);
 
@@ -40,21 +40,31 @@ Usage:
 `;
 
 switch (command) {
-  case "run":
+  case "run": {
+    const { run } = await import("../lib/run.js");
     process.exit(await run(args));
     break;
-  case "init":
+  }
+  case "init": {
+    const { init } = await import("../lib/init.js");
     process.exit(await init(args));
     break;
-  case "onboard":
+  }
+  case "onboard": {
+    const { onboard } = await import("../lib/onboard.js");
     process.exit(await onboard(args));
     break;
-  case "runs":
+  }
+  case "runs": {
+    const { runs } = await import("../lib/runs.js");
     process.exit(await runs(args));
     break;
-  case "mcp":
+  }
+  case "mcp": {
+    const { mcp } = await import("../lib/mcp.js");
     await mcp();
     break;
+  }
   default:
     console.log(USAGE);
     process.exit(command === undefined || command === "--help" ? 0 : 1);

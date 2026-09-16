@@ -12,6 +12,7 @@ export function cliEnv(extra = {}) {
     HIGHBALL_POSTHOG_KEY: "",
     POSTHOG_API_KEY: "",
     HIGHBALL_DISABLED: "",
+    HIGHBALL_EXEC_VIA: "",
     ...extra
   };
 }

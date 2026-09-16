@@ -84,6 +84,15 @@ exec:
   via: docker compose exec -T --workdir /app app
 ```
 
+**Ask your human where that block belongs.** If the whole team runs in
+Docker, it goes in `checks.yml` and is committed. If only *this* checkout
+does — the team runs on the host — it goes in `.highball/checks.local.yml`
+instead, which `init` gitignores: the same `exec:` block, merged over
+`checks.yml` on every run, never committed. A per-machine wrapper that
+lands in a commit breaks every teammate's hooks. The mirror case works
+too: a host-based checkout in a repo that commits Docker writes
+`exec: { via: null }` there.
+
 Four traps, each of which has bitten a real onboarding:
 
 1. **`-T` is mandatory.** Hook shells have no TTY; without it commands hang
@@ -167,6 +176,10 @@ Decision rules:
   `exec: host` when it invokes a host tool **or** is self-orchestrating
   (a `just`/`make` target that runs `docker compose` itself must not be
   double-wrapped).
+- Anything that is true of this machine rather than the repo — the
+  wrapper, a longer budget, a personal PostHog key — goes in
+  `.highball/checks.local.yml`, not in `checks.yml`. It may set only
+  `exec`, `timeouts` and `reporting`; rules always live in `checks.yml`.
 - If you end up with no `fast: true` rule at all — every check is a slow
   suite — remove the `PostToolUse` entry from `.claude/settings.json` (or
   re-run `init` after writing the rules). Every firing of a fast hook with

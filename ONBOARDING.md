@@ -108,6 +108,16 @@ Run `npx @profoundry-us/highball init`. It never overwrites: an existing
 exists it prints the hook snippet for you to merge by hand — merge it
 without disturbing existing hooks. Otherwise it creates both files.
 
+The hooks it writes call the installed package directly
+(`node node_modules/@profoundry-us/highball/bin/highball.js run ...`), not
+`npx`: the fast hook fires after every tool call, most of those calls skip
+in a few milliseconds, and `npx` would add ~180ms to each one just to
+resolve to the same file. Keep that form when you merge by hand.
+
+If an existing `checks.yml` has no `fast: true` rule, init scaffolds the
+Stop hook only. A fast hook with nothing to run still costs node startup
+and a git status on every tool call, for nothing.
+
 ## 3. Write `.highball/checks.yml`
 
 Fill the scaffold using what the survey found. A containerized repo looks
@@ -157,6 +167,10 @@ Decision rules:
   `exec: host` when it invokes a host tool **or** is self-orchestrating
   (a `just`/`make` target that runs `docker compose` itself must not be
   double-wrapped).
+- If you end up with no `fast: true` rule at all — every check is a slow
+  suite — remove the `PostToolUse` entry from `.claude/settings.json` (or
+  re-run `init` after writing the rules). Every firing of a fast hook with
+  nothing to run is pure overhead on every tool call.
 - Start minimal: one or two fast syntax/lint rules plus the repo's unit
   test command at turn end. You can grow the ruleset later; a wrong rule
   that blocks every turn erodes trust immediately.

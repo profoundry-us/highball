@@ -8,6 +8,24 @@ Release dates are the day the version was published to npm.
 
 ## [Unreleased]
 
+### Changed
+
+- A skipped run costs about 80ms instead of about 130ms on a laptop, and the
+  hooks no longer add an `npx` hop on top (below). The CLI loads a subcommand
+  only when it is asked for, so a hook firing no longer pays to import the
+  MCP server and its SDK; and `--if-changed` compares the stamp before
+  parsing `checks.yml`, since the checkout path alone identifies it. Stamps
+  are now named by directory rather than project name; old stamp files are
+  simply never read again. (#27)
+- `init` scaffolds hooks that run the installed package directly
+  (`node node_modules/@profoundry-us/highball/bin/highball.js run ...`)
+  instead of through `npx`, which added ~180ms to every firing on top of a
+  local install. Existing installs: change the two hook commands by hand.
+  (#27)
+- `init` leaves out the fast hook when an existing `checks.yml` has no
+  `fast: true` rule, and the onboarding guide tells the agent to drop it if
+  none are written. (#27)
+
 ## [0.7.1] - 2026-09-12
 
 ### Fixed

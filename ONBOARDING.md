@@ -221,8 +221,8 @@ PostHog receives.
 
 ## 5. Verify — all four proofs, not just the happy path
 
-1. **Fast path:** `npx @profoundry-us/highball run --fast` exits 0, every rule passed.
-2. **Full path:** `npx @profoundry-us/highball run` exits 0 (or fails honestly on real
+1. **Fast path:** the fast hook's own command, `node node_modules/@profoundry-us/highball/bin/highball.js run --fast`, exits 0, every rule passed.
+2. **Full path:** the Stop hook's command, `node node_modules/@profoundry-us/highball/bin/highball.js run`, exits 0 (or fails honestly on real
    pre-existing issues — surface those to your human rather than papering
    over them).
 3. **The guardrail:** prove exit 2 works. Create an obviously-temporary

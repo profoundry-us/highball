@@ -8,6 +8,8 @@ Release dates are the day the version was published to npm.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-17
+
 ### Added
 
 - `.highball/checks.local.yml`: a gitignored per-checkout overlay merged over
@@ -281,7 +283,8 @@ Not published to npm.
 - `highball login`, for the hosted dashboard of the time.
 - MIT license and registry metadata.
 
-[Unreleased]: https://github.com/profoundry-us/highball/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/profoundry-us/highball/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/profoundry-us/highball/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/profoundry-us/highball/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/profoundry-us/highball/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/profoundry-us/highball/compare/v0.6.0...v0.6.1

@@ -86,3 +86,24 @@ test("init treats an unreadable checks.yml as having fast rules", () => {
   runInit(dir);
   assert.equal(settings(dir).hooks.PostToolUse.length, 1);
 });
+
+// checks.local.yml is gitignored for the same reason `disabled` is: a
+// per-machine Docker wrapper landing in a commit breaks every teammate's
+// hooks, which is the exact incident the overlay exists to prevent.
+test("init gitignores checks.local.yml, and adds the line to an older install's .gitignore", () => {
+  const fresh = mkdtempSync(join(tmpdir(), "hb-init-"));
+  runInit(fresh);
+  const ignored = readFileSync(join(fresh, ".highball", ".gitignore"), "utf8").split("\n");
+  assert.ok(ignored.includes("disabled"));
+  assert.ok(ignored.includes("checks.local.yml"));
+
+  const older = mkdtempSync(join(tmpdir(), "hb-init-"));
+  mkdirSync(join(older, ".highball"));
+  writeFileSync(join(older, ".highball", ".gitignore"), "# mine\ndisabled\n");
+  assert.match(runInit(older), /added checks\.local\.yml to \.highball\/\.gitignore/);
+  const updated = readFileSync(join(older, ".highball", ".gitignore"), "utf8");
+  assert.match(updated, /^# mine\ndisabled\n/);
+  assert.ok(updated.split("\n").includes("checks.local.yml"));
+
+  assert.match(runInit(older), /kept existing \.highball\/\.gitignore/);
+});

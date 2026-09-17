@@ -8,6 +8,20 @@ Release dates are the day the version was published to npm.
 
 ## [Unreleased]
 
+### Added
+
+- `.highball/checks.local.yml`: a gitignored per-checkout overlay merged over
+  `checks.yml` on every run, for what differs on one machine — the app runs
+  in Docker here and on the host for the team, or this laptop needs a longer
+  budget. It may set `exec`, `timeouts` and `reporting`, and nothing else;
+  any other key fails the run with a message. `exec` and `reporting` replace
+  the committed block whole, `timeouts` merges per field, and
+  `exec: { via: null }` turns a committed wrapper off. `HIGHBALL_EXEC_VIA`
+  does the same for CI and one-off shells and wins over both files. The run
+  header names the active wrapper and where it came from. `init` gitignores
+  the file, and adds the line to an older install's `.highball/.gitignore`.
+  (#20)
+
 ### Changed
 
 - A skipped run costs about 80ms instead of about 130ms on a laptop, and the

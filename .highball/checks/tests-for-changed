@@ -13,7 +13,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 import { basename } from "node:path";
 
-const SLOW = new Set([ "disabled", "if-changed", "run-stdin", "timeout" ]);
+const SLOW = new Set([ "disabled", "if-changed", "local-config", "run-stdin", "timeout" ]);
 
 const changed = (process.env.HIGHBALL_CHANGED_FILES ?? "")
   .split("\n").map((line) => line.trim()).filter(Boolean);

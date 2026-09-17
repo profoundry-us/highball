@@ -1,2 +1,4 @@
 # A local, uncommitted `highball run` off switch.
 disabled
+# Per-checkout overrides of exec, timeouts and reporting.
+checks.local.yml

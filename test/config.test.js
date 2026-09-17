@@ -70,3 +70,77 @@ test("a budget that isn't a positive number of seconds is an error, not a shrug"
   );
   assert.doesNotThrow(() => loadConfig(repoWith(BASE + "    timeout: 2.5\ntimeouts:\n  full: 90\n  judge: 600\n")));
 });
+
+
+// --- checks.local.yml, the per-checkout overlay ---
+
+import { LOCAL_CONFIG_PATH, execContext } from "../lib/config.js";
+
+function repoWithLocal(yaml, local) {
+  const dir = repoWith(yaml);
+  writeFileSync(join(dir, ".highball", "checks.local.yml"), local);
+  return dir;
+}
+
+const NO_ENV = {};
+
+test("checks.local.yml overrides exec, merges timeouts per field, and replaces reporting whole", () => {
+  const committed = BASE +
+    "exec:\n  via: bundle exec\n" +
+    "timeouts:\n  fast: 4\n  full: 90\n" +
+    "reporting:\n  posthog:\n    host: https://eu.i.posthog.com\n    project_key: phc_team\n";
+  const config = loadConfig(repoWithLocal(committed,
+    "exec:\n  via: docker compose exec -T app\n" +
+    "timeouts:\n  full: 600\n" +
+    "reporting:\n  posthog:\n    project_key: phc_mine\n"));
+
+  assert.equal(commandFor({ run: "rspec" }, config, NO_ENV), "docker compose exec -T app rspec");
+  assert.deepEqual(execContext(config, NO_ENV), { via: "docker compose exec -T app", source: LOCAL_CONFIG_PATH });
+  // Per-field: the team's fast budget survives a local full budget.
+  assert.equal(timeoutFor({ run: "x", fast: true }, config), 4_000);
+  assert.equal(timeoutFor({ run: "x" }, config), 600_000);
+  // Whole-block: the team's host is gone along with its key.
+  assert.deepEqual(config.reporting, { posthog: { project_key: "phc_mine" } });
+  assert.deepEqual(config.local, [ "exec", "timeouts", "reporting" ]);
+});
+
+test("a local `exec: { via: null }` turns a committed wrapper off", () => {
+  const config = loadConfig(repoWithLocal(BASE + "exec:\n  via: docker compose exec -T app\n", "exec:\n  via: null\n"));
+  assert.equal(commandFor({ run: "rspec" }, config, NO_ENV), "rspec");
+  assert.deepEqual(execContext(config, NO_ENV), { via: null, source: null });
+});
+
+test("without a local file the committed wrapper is the source, and none is no source", () => {
+  const wrapped = loadConfig(repoWith(BASE + "exec:\n  via: docker compose exec -T app\n"));
+  assert.deepEqual(execContext(wrapped, NO_ENV), { via: "docker compose exec -T app", source: ".highball/checks.yml" });
+  assert.equal(wrapped.local, undefined);
+  assert.deepEqual(execContext(loadConfig(repoWith(BASE)), NO_ENV), { via: null, source: null });
+});
+
+test("HIGHBALL_EXEC_VIA wins over both files, and an empty one is unset", () => {
+  const config = loadConfig(repoWithLocal(BASE + "exec:\n  via: committed\n", "exec:\n  via: local\n"));
+  assert.deepEqual(execContext(config, { HIGHBALL_EXEC_VIA: "sh -c" }), { via: "sh -c", source: "HIGHBALL_EXEC_VIA" });
+  assert.equal(commandFor({ run: "true" }, config, { HIGHBALL_EXEC_VIA: "sh -c" }), "sh -c true");
+  assert.equal(commandFor({ run: "true", exec: "host" }, config, { HIGHBALL_EXEC_VIA: "sh -c" }), "true");
+  assert.equal(execContext(config, { HIGHBALL_EXEC_VIA: "  " }).via, "local");
+});
+
+test("an empty or absent checks.local.yml changes nothing", () => {
+  const plain = loadConfig(repoWith(BASE + "exec:\n  via: committed\n"));
+  const empty = loadConfig(repoWithLocal(BASE + "exec:\n  via: committed\n", "# nothing yet\n"));
+  assert.deepEqual(empty, plain);
+});
+
+// The file exists to change how this checkout runs; a key it can't honour
+// must say so, not sit there looking like it worked.
+test("checks.local.yml rejects keys that aren't the checkout's to set", () => {
+  assert.throws(() => loadConfig(repoWithLocal(BASE, "checks:\n  - id: b\n    run: \"true\"\n")),
+    /checks\.local\.yml: `checks:` can't be set locally — only exec, timeouts, reporting can/);
+  assert.throws(() => loadConfig(repoWithLocal(BASE, "enabled: false\n")), /`enabled:` can't be set locally/);
+  assert.throws(() => loadConfig(repoWithLocal(BASE, "exce:\n  via: x\n")), /`exce:` can't be set locally/);
+  assert.throws(() => loadConfig(repoWithLocal(BASE, "- exec\n")), /must be a YAML block/);
+  assert.throws(() => loadConfig(repoWithLocal(BASE, "exec: docker compose exec -T app\n")), /`exec:` must be a block with `via:`/);
+  assert.throws(() => loadConfig(repoWithLocal(BASE, "timeouts:\n  full: 0\n")),
+    /checks\.local\.yml: `timeouts\.full:` must be a positive number/);
+  assert.throws(() => loadConfig(repoWithLocal(BASE, "timeouts:\n  slow: 5\n")), /checks\.local\.yml: `timeouts\.slow` is not a thing/);
+});

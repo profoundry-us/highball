@@ -140,6 +140,42 @@ The runner computes the branch's changed-file list once (it owns git) and
 hands it to every rule via `HIGHBALL_CHANGED_FILES` — check scripts stay pure
 analyzers and need no git in their execution context.
 
+### checks.local.yml: what differs on your machine
+
+`checks.yml` is the team's. When your checkout differs — the app runs in
+Docker here and on the host for everyone else, or this laptop needs a
+longer budget — put the difference in `.highball/checks.local.yml`. It is
+gitignored (`init` writes the line), re-read on every run, and merged over
+`checks.yml`:
+
+```yaml
+# .highball/checks.local.yml — this checkout only, never committed
+exec:
+  via: docker compose exec -T app    # replaces the committed exec block
+timeouts:
+  full: 300                          # merged per field; the team's fast: stays
+```
+
+It may set `exec`, `timeouts` and `reporting`, and nothing else — the
+rules are the team's decision, and a local file that could quietly change
+what is checked would defeat the purpose. Any other key fails the run with
+a message saying so, rather than silently doing nothing. `exec` and
+`reporting` replace the committed block whole; `timeouts` merges per field.
+`exec: { via: null }` means "no wrapper here", for the host-based developer
+in a repo that commits Docker.
+
+`HIGHBALL_EXEC_VIA` does the same for CI and one-off shells and wins over
+both files, the way `HIGHBALL_DISABLED` beats `enabled:`. Whichever
+applies, the run says so up front:
+
+```console
+highball: rules run via `docker compose exec -T app` (.highball/checks.local.yml)
+```
+
+Precedence for the wrapper, highest first: `HIGHBALL_EXEC_VIA`,
+`checks.local.yml`, `checks.yml`, then the host. `exec: host` on a rule
+opts out of all of them, and AI-judged rules stay in-process regardless.
+
 ## Timeouts
 
 Every rule runs under a wall-clock budget. A rule that runs past it is

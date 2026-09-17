@@ -8,6 +8,16 @@ Release dates are the day the version was published to npm.
 
 ## [Unreleased]
 
+### Changed
+
+- Merging the release PR is the release. `npm run release -- X.Y.Z` writes
+  the bump on a clean main (package.json, the lockfile, and the changelog's
+  Unreleased section moved under a dated heading), pushes `release/X.Y.Z`
+  and opens the PR with that section as its body; on merge, a workflow tags
+  the merged commit and dispatches the publish workflow. Nobody pushes a tag
+  by hand any more, which is how a tag once collided with a branch of the
+  same name and was refused. RELEASING.md documents the procedure.
+
 ## [0.8.0] - 2026-09-17
 
 ### Added

@@ -439,6 +439,11 @@ tree down with it and journaled which rule it was in. A rule that ran past
 its budget is `failed` with `timed_out`. None of these used to leave a
 trace, which is exactly when a trace was needed.
 
+## Releasing
+
+Maintainers: see [RELEASING.md](RELEASING.md). In short, `npm run release --
+X.Y.Z` opens the release PR, and merging it publishes.
+
 ## Roadmap
 
 Built-in generic rules (spec pairing, focused-spec detection, diff budgets)

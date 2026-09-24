@@ -1,0 +1,65 @@
+# Merging a release PR is the release. This tags the merged commit with the
+# version package.json now carries — if that tag doesn't exist yet — and
+# hands it to publish.yml, which builds, tests, publishes and creates the
+# GitHub release from the tag as it always has.
+#
+# Nobody pushes a tag by hand any more: the tag can only ever land on the
+# commit that main actually has, and it can't collide with a local branch.
+#
+# The dispatch is deliberate. A tag pushed with the workflow token does not
+# fire publish.yml's `push: tags` trigger (GitHub suppresses runs caused by
+# that token, except workflow_dispatch), so the tag is created here and
+# publish.yml is started explicitly with it.
+name: Tag Release
+
+on:
+  push:
+    branches: [main]
+    paths: [package.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write # push the tag
+  actions: write  # dispatch publish.yml
+
+concurrency:
+  group: tag-release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Read the version main carries
+        run: echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
+
+      - name: Tag it, unless it already is
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+            echo "$tag already exists — nothing to release."
+            echo "tagged=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "$tag"
+          git push origin "refs/tags/$tag"
+          echo "tagged=true" >> "$GITHUB_ENV"
+
+      - name: Publish from the tag
+        if: env.tagged == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publish.yml --ref main -f "tag=$tag"
+
+      - name: Summary
+        run: |
+          if [ "$tagged" = "true" ]; then
+            echo "## Tagged $tag — publish.yml dispatched" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## $tag already released — nothing done" >> "$GITHUB_STEP_SUMMARY"
+          fi

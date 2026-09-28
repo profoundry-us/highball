@@ -108,7 +108,11 @@ Four traps, each of which has bitten a real onboarding:
 
 A stopped container makes every wrapped rule fail. That's correct behavior —
 unverifiable is not passing — but say so plainly to your human rather than
-quietly dropping the rules.
+quietly dropping the rules. A daemon that hangs instead of failing is caught
+too: the first wrapped rule times out, the runner probes the wrapper, and
+if the probe hangs the rest fail immediately with a message naming the
+wrapper (`exec.via isn't answering`). When you see that message, the fix
+is Docker, not the rule or its budget.
 
 ## 2. Scaffold
 

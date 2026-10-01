@@ -16,7 +16,20 @@ Release dates are the day the version was published to npm.
   and opens the PR with that section as its body; on merge, a workflow tags
   the merged commit and dispatches the publish workflow. Nobody pushes a tag
   by hand any more, which is how a tag once collided with a branch of the
-  same name and was refused. RELEASING.md documents the procedure.
+  same name and was refused. See [RELEASING.md](RELEASING.md).
+
+### Fixed
+
+- A hung `exec.via` wrapper no longer masquerades as a hung rule, and no
+  longer costs every wrapped rule its full budget. When a wrapped rule times
+  out the runner probes the wrapper once (`<via> true`, under the fast
+  budget); if the probe hangs or fails, that rule's output blames the wrapper
+  and every remaining wrapped rule fails at once with the probe's diagnosis,
+  while `exec: host` rules still run. If the probe answers, the rule itself
+  hung and the message says so. The journal now records the command that
+  actually ran, wrapper included, so run history shows a Docker hang as a
+  Docker hang. See [When the wrapper isn't
+  answering](README.md#when-the-wrapper-isnt-answering). (#33)
 
 ## [0.8.0] - 2026-09-17
 
@@ -32,7 +45,8 @@ Release dates are the day the version was published to npm.
   does the same for CI and one-off shells and wins over both files. The run
   header names the active wrapper and where it came from. `init` gitignores
   the file, and adds the line to an older install's `.highball/.gitignore`.
-  (#20)
+  See [checks.local.yml: what differs on your
+  machine](README.md#checkslocalyml-what-differs-on-your-machine). (#20)
 
 ### Changed
 
@@ -47,7 +61,7 @@ Release dates are the day the version was published to npm.
   (`node node_modules/@profoundry-us/highball/bin/highball.js run ...`)
   instead of through `npx`, which added ~180ms to every firing on top of a
   local install. Existing installs: change the two hook commands by hand.
-  (#27)
+  See [Setup](README.md#setup-let-the-repos-own-agent-do-it). (#27)
 - `init` leaves out the fast hook when an existing `checks.yml` has no
   `fast: true` rule, and the onboarding guide tells the agent to drop it if
   none are written. (#27)

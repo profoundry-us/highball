@@ -176,6 +176,28 @@ Precedence for the wrapper, highest first: `HIGHBALL_EXEC_VIA`,
 `checks.local.yml`, `checks.yml`, then the host. `exec: host` on a rule
 opts out of all of them, and AI-judged rules stay in-process regardless.
 
+### When the wrapper isn't answering
+
+A stopped container fails fast and says so (`service "app" is not
+running`), and every wrapped rule fails the same way. A daemon that
+accepts connections and never answers is worse: `docker compose exec`
+just hangs, and from outside that looks exactly like a hung rule. The
+runner handles it like this:
+
+- The first wrapped rule to time out costs one budget, as any timeout does.
+- The runner then probes the wrapper once, `<via> true`, under the fast
+  budget. If the probe hangs or fails too, that rule's output blames the
+  wrapper rather than the rule, and every remaining wrapped rule fails at
+  once with the probe's diagnosis instead of paying its own budget. Rules
+  marked `exec: host` still run.
+- If the probe answers, the rule itself hung; the message says so, and the
+  run continues as normal.
+
+Either way the run fails — unverifiable is not passing — but it fails in
+seconds and names the wrapper and where it was declared. The journal
+records the command that actually ran, wrapper included, so `highball
+runs <n> --logs` shows a Docker hang as a Docker hang.
+
 ## Timeouts
 
 Every rule runs under a wall-clock budget. A rule that runs past it is

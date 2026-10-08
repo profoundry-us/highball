@@ -8,6 +8,8 @@ Release dates are the day the version was published to npm.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-08
+
 ### Added
 
 - Rules can run side by side. AI-judged rules run alongside the rest of the
@@ -347,7 +349,8 @@ Not published to npm.
 - `highball login`, for the hosted dashboard of the time.
 - MIT license and registry metadata.
 
-[Unreleased]: https://github.com/profoundry-us/highball/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/profoundry-us/highball/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/profoundry-us/highball/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/profoundry-us/highball/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/profoundry-us/highball/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/profoundry-us/highball/compare/v0.7.0...v0.7.1

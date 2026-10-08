@@ -183,7 +183,15 @@ Decision rules:
 - Anything that is true of this machine rather than the repo — the
   wrapper, a longer budget, a personal PostHog key — goes in
   `.highball/checks.local.yml`, not in `checks.yml`. It may set only
-  `exec`, `timeouts` and `reporting`; rules always live in `checks.yml`.
+  `exec`, `timeouts`, `reporting` and `concurrency`; rules always live in
+  `checks.yml`.
+- Slow rules that don't share a database, port or lock with the rest can
+  run alongside them with `parallel: true`; AI-judged rules already do.
+  A full suite that's slow because it's a *sum* of independent rules is
+  the case for it.
+- For an AI-judged rule on a repo with history, consider `scope: changed`
+  in the rubric's front matter: it enforces only on the lines the branch
+  touched, so an old offense in a file you edited doesn't block the turn.
 - If you end up with no `fast: true` rule at all — every check is a slow
   suite — remove the `PostToolUse` entry from `.claude/settings.json` (or
   re-run `init` after writing the rules). Every firing of a fast hook with

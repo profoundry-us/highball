@@ -8,6 +8,44 @@ Release dates are the day the version was published to npm.
 
 ## [Unreleased]
 
+### Added
+
+- Rules can run side by side. AI-judged rules run alongside the rest of the
+  run by default (`parallel: false` opts one out), and any rule opts in with
+  `parallel: true`; a run then takes about as long as its slowest rule
+  rather than the sum of them. A top-level `concurrency:` (default 4, also
+  settable in `checks.local.yml`) caps how many parallel rules and judge
+  calls run at once. Each rule keeps its own budget and its own output line,
+  the journal keeps `checks.yml` order, and a stopped runner kills every
+  lane. See [Running rules side by
+  side](README.md#running-rules-side-by-side). (#36)
+- `scope: changed` in a rubric's front matter enforces only on the lines the
+  branch touched (`git diff -U0 HEAD`, or every line of a new file): the
+  judge sees whole files for context, is told the changed lines, and the
+  runner drops any offense outside them and says how many. Touching one line
+  of a file no longer makes every old offense in it blocking. The default,
+  `scope: files`, is unchanged. See [AI-judged
+  rules](README.md#ai-judged-rules). (#36)
+- A rubric's `exclude` entries may be globs: one containing `*`, `**` or `?`
+  matches like `include` does, so `**/config/**` reaches an engine's nested
+  config. Plain entries stay path prefixes. (#36)
+
+### Changed
+
+- The AI judge sees numbered source, so the lines it cites are lines it saw.
+  (#36)
+
+### Fixed
+
+- An AI-judged rule judges every selected file. The evidence bundle used to
+  stop at `max_bytes` (48,000 by default) and report the rest as "skipped
+  for size", and because untracked files come last in the changed list, a
+  branch's brand-new files were the ones dropped while the rule passed. Files
+  are now split across as many judge calls as it takes, run concurrently,
+  and the offenses merged; a file over `max_bytes` on its own gets a call to
+  itself. One budget still covers the whole rule. See [AI-judged
+  rules](README.md#ai-judged-rules). (#36)
+
 ## [0.8.1] - 2026-10-01
 
 ### Changed

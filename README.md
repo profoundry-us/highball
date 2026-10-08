@@ -156,7 +156,7 @@ timeouts:
   full: 300                          # merged per field; the team's fast: stays
 ```
 
-It may set `exec`, `timeouts` and `reporting`, and nothing else — the
+It may set `exec`, `timeouts`, `reporting` and `concurrency`, and nothing else — the
 rules are the team's decision, and a local file that could quietly change
 what is checked would defeat the purpose. Any other key fails the run with
 a message saying so, rather than silently doing nothing. `exec` and
@@ -238,6 +238,44 @@ run was journaled nowhere — "the tests hang sometimes" had nothing to point
 at. The hook timeouts `init` writes are backstops for the runner itself, not
 budgets for rules: they should only ever fire if the runner is wedged.
 
+## Running rules side by side
+
+Rules run one after another in `checks.yml` order, so a run takes the sum
+of its rules. Rules that don't contend can run alongside that sequence
+instead, and then a run takes about as long as its slowest rule:
+
+```yaml
+concurrency: 4                 # default; how much runs alongside at once
+
+checks:
+  - id: unit-tests
+    name: Unit tests
+    run: bundle exec rspec spec        # sequential, as always
+
+  - id: system-specs
+    name: System specs
+    run: bin/system-specs
+    parallel: true                     # runs alongside from the start
+
+  - id: comment-quality
+    name: Comment quality (AI)
+    rubric: .highball/packs/rails/rubrics/comment-quality.md
+                                       # AI-judged: alongside by default
+```
+
+- **AI-judged rules run alongside by default.** A judge waiting on a model
+  doesn't contend with a test suite in a container. `parallel: false` keeps
+  one in the sequential lane.
+- **Any other rule opts in with `parallel: true`** — do it for rules that
+  don't share a database, a port or a lock with the sequential ones.
+- **`concurrency:`** caps how many things run alongside at once: each
+  `parallel: true` rule and each AI judge call holds one slot. It's a
+  property of the machine, so `checks.local.yml` may set it too.
+- Each rule still has its own budget, and the output still gets one line per
+  rule: a rule running alongside prints its line when it finishes, between
+  the sequential lane's lines rather than in the middle of one. The journal
+  keeps `checks.yml` order.
+
 ## Turning it off
 
 Three switches, differing in who they affect and — the part that usually
@@ -317,14 +355,35 @@ language-specific part:
 ```markdown
 ---
 include: "**/*.rb"          # default: every changed file
-exclude: [db/, config/]     # path prefixes
+exclude: [db/, "**/config/**"]  # a plain entry is a path prefix; *, ** and ? make it a glob
+scope: changed              # default: files
+max_bytes: 48000            # evidence per judge call (the default)
 model: claude-haiku-4-5-20251001
 ---
 
 A comment VIOLATES this rubric when it restates what the code already says.
 ```
 
-Three properties are enforced by the runner rather than left to each repo:
+**Every selected file is judged.** When the files are larger than
+`max_bytes` together, they're split across several judge calls, run
+concurrently, and the offenses merged; a single file larger than
+`max_bytes` gets a call to itself. (Before 0.9 the bundle stopped at the
+cap, and because untracked files come last in the changed list, a branch's
+brand-new files were the ones dropped.) The rule's budget covers all its
+calls. Source reaches the judge with numbered lines, so the lines it cites
+are lines it saw.
+
+**`scope: changed` enforces only on what the branch touched.** The judge
+still sees whole files for context, but each file is labelled with its
+changed lines (`git diff -U0 HEAD`, or every line of a new file), the
+prompt tells it to report only those, and the runner drops any offense
+outside them — so touching one line of a file no longer makes every
+pre-existing offense in it blocking. That's the same ratchet the
+`--changed-only` scripts apply. The output says how many were ignored. An
+offense the runner can't place (an unknown file, a line that isn't a
+number) is kept. The default, `scope: files`, judges whole files as before.
+
+Four properties are enforced by the runner rather than left to each repo:
 
 - **Never on the fast path.** Rubric rules are dropped from `--fast` runs even
   if marked `fast: true` — otherwise you pay model latency on every edit.
@@ -332,6 +391,8 @@ Three properties are enforced by the runner rather than left to each repo:
   wraps it and no `exec: host` annotation is required.
 - **No evidence, no call.** When nothing in the changed set matches `include`,
   the rule passes without spawning the model at all.
+- **Alongside, not in line.** AI-judged rules run concurrently with the rest
+  of the run; see [Running rules side by side](#running-rules-side-by-side).
 
 Rubrics live with the opinions they express: a framework pack such as
 `@profoundry-us/highball-rails` ships them, and the runner supplies the engine.

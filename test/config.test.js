@@ -135,7 +135,7 @@ test("an empty or absent checks.local.yml changes nothing", () => {
 // must say so, not sit there looking like it worked.
 test("checks.local.yml rejects keys that aren't the checkout's to set", () => {
   assert.throws(() => loadConfig(repoWithLocal(BASE, "checks:\n  - id: b\n    run: \"true\"\n")),
-    /checks\.local\.yml: `checks:` can't be set locally — only exec, timeouts, reporting can/);
+    /checks\.local\.yml: `checks:` can't be set locally — only exec, timeouts, reporting, concurrency can/);
   assert.throws(() => loadConfig(repoWithLocal(BASE, "enabled: false\n")), /`enabled:` can't be set locally/);
   assert.throws(() => loadConfig(repoWithLocal(BASE, "exce:\n  via: x\n")), /`exce:` can't be set locally/);
   assert.throws(() => loadConfig(repoWithLocal(BASE, "- exec\n")), /must be a YAML block/);
@@ -143,4 +143,21 @@ test("checks.local.yml rejects keys that aren't the checkout's to set", () => {
   assert.throws(() => loadConfig(repoWithLocal(BASE, "timeouts:\n  full: 0\n")),
     /checks\.local\.yml: `timeouts\.full:` must be a positive number/);
   assert.throws(() => loadConfig(repoWithLocal(BASE, "timeouts:\n  slow: 5\n")), /checks\.local\.yml: `timeouts\.slow` is not a thing/);
+});
+
+
+// --- parallel: and concurrency: ---
+
+test("parallel: must be a boolean, and concurrency: a whole number of at least 1", () => {
+  assert.throws(() => loadConfig(repoWith(BASE + "    parallel: yes\n")), /rule `a` has `parallel: yes` — it must be true or false/);
+  assert.doesNotThrow(() => loadConfig(repoWith(BASE + "    parallel: true\n")));
+  assert.throws(() => loadConfig(repoWith(BASE + "concurrency: 0\n")), /`concurrency:` must be a whole number of at least 1/);
+  assert.throws(() => loadConfig(repoWith(BASE + "concurrency: 2.5\n")), /`concurrency:`/);
+  assert.equal(loadConfig(repoWith(BASE + "concurrency: 2\n")).concurrency, 2);
+});
+
+// How much runs at once is a property of the machine, so the overlay may set it.
+test("checks.local.yml may set concurrency, and it's validated there too", () => {
+  assert.equal(loadConfig(repoWithLocal(BASE + "concurrency: 4\n", "concurrency: 1\n")).concurrency, 1);
+  assert.throws(() => loadConfig(repoWithLocal(BASE, "concurrency: -1\n")), /checks\.local\.yml: `concurrency:`/);
 });

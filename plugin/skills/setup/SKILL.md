@@ -20,11 +20,12 @@ anything, and change nothing until the person says yes. Touch only
 ## 1. The runner is installed
 
 If the output above says the file or directory doesn't exist, there's no
-`node_modules/.bin/highball` in `${CLAUDE_PROJECT_DIR}`, the directory Claude
-Code started in. If that directory is below the repo root (it has no `.git`),
-stop and say Claude Code needs starting at the repo root: it reads
-`.claude/settings.json` from there, so the hooks set up from here wouldn't
-load. Otherwise the runner isn't installed in this checkout.
+`node_modules/.bin/highball` in `${CLAUDE_PROJECT_DIR}`, the directory
+Claude Code started in. If that directory has no `package.json` and one
+above it does, it is below the repo root: stop and say Claude Code needs
+starting at the repo root, since it reads `.claude/settings.json` from the
+directory it starts in and hooks set up from here wouldn't load. Otherwise
+the runner isn't installed in this checkout.
 
 - If `package.json` already lists `@profoundry-us/highball`, the dependencies
   just aren't installed. Say so, and offer the repo's own install (`npm ci`,

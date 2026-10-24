@@ -2,7 +2,10 @@
 name: show
 description: One Highball run's checks with their timings and failure output, and the command that prints its full logs. Use when asked why a Highball run failed, what a run checked, or how long each check took.
 argument-hint: "<run number or id> [--logs]"
-allowed-tools: Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+allowed-tools:
+  - Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs *)
+  - Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+  - Bash(true)
 ---
 
 The Highball run asked for, from the journal on this machine:

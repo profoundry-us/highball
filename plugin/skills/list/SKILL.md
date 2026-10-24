@@ -1,7 +1,10 @@
 ---
 name: list
 description: Recent Highball check runs in this repo, newest first, grouped by the prompt that triggered them, with each run's number, id, age, fast or full, duration and result. Use when asked what Highball ran, whether the checks passed, or what the hooks did recently.
-allowed-tools: Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+allowed-tools:
+  - Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs *)
+  - Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+  - Bash(true)
 ---
 
 Highball's run history for this repo, from the journal on this machine:

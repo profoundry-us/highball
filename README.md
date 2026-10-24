@@ -573,13 +573,15 @@ The `highball` plugin puts run history in Claude Code's slash menu:
 Install it for yourself, in every project:
 
 ```bash
-claude plugin install highball --marketplace profoundry-us/highball
+claude plugin marketplace add profoundry-us/highball
+claude plugin install highball@highball
 ```
 
-Or in a session, `/plugin install highball --marketplace profoundry-us/highball`.
-On Claude Code before 2.1.275, add the marketplace first with
-`/plugin marketplace add profoundry-us/highball`, then
-`/plugin install highball@highball`.
+On Claude Code 2.1.292 or later, `claude plugin install highball
+--marketplace profoundry-us/highball` does both in one step. In a session,
+`/plugin marketplace add profoundry-us/highball` then
+`/plugin install highball@highball` does the same, or, from 2.1.275,
+`/plugin install highball --marketplace profoundry-us/highball`.
 
 Or enable it for a whole team by committing these two keys to the project's
 `.claude/settings.json`, beside the hooks. `highball init` writes them when
@@ -601,12 +603,15 @@ reaches everyone without an update step.
 
 The skills are thin. Each one runs the project's own
 `node_modules/.bin/highball runs` and reports what it printed, so they show
-whatever runner the project has installed, and they work from any directory
-in the repo. They never fall back to `npx` or a global `highball`. The ones
-that read history never start a run: the hooks run the checks, and a run
-started by hand has no session behind it, so it lands outside the prompt it
-belongs to. `setup` runs the Stop hook's command once at the end, to prove
-the hooks it wrote work. The
+whatever runner the project has installed. Like the hooks, they need
+Claude Code started at the repo root: it reads `.claude/settings.json` and
+sets `CLAUDE_PROJECT_DIR` from the directory it starts in, so in a session
+started in a subdirectory the skills can't find the runner, and say so.
+They never fall back to `npx` or a global `highball`. The ones that read
+history never start a run: the hooks run the checks, and a run started by
+hand has no session behind it, so it lands outside the prompt it belongs
+to. `setup` runs the Stop hook's command once at the end, to prove the
+hooks it wrote work. The
 plugin ships no hooks of its own. The hooks in the committed
 `settings.json` stay the enforcement, so a teammate without the plugin is
 checked the same as everyone else.

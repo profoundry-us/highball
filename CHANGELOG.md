@@ -13,8 +13,8 @@ Release dates are the day the version was published to npm.
 - A Claude Code plugin, `highball`, puts run history in the slash menu:
   `/highball:list` shows recent runs grouped by prompt, and
   `/highball:show <number or id>` shows one run's checks with their timings.
-  Install it with `claude plugin install highball --marketplace
-  profoundry-us/highball`, or enable it for a team in
+  Install it with `claude plugin marketplace add profoundry-us/highball`
+  and `claude plugin install highball@highball`, or enable it for a team in
   `.claude/settings.json`. The skills run the project's own
   `node_modules/.bin/highball runs` and never start a run. The plugin lives
   in the repo, not the npm package, and releases move its version with the

@@ -66,7 +66,63 @@ test("skills call the project's own runner, never npx", () => {
       assert.match(command, / 2>&1 \|\| true$/, `${name}: ${command}`);
     }
     if (!MAY_RUN.has(name)) {
-      assert.equal(front["allowed-tools"], "Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)");
+      assert.deepEqual(front["allowed-tools"], READ_RULES, name);
+    }
+  }
+});
+
+// The Bash rules that pre-approve `highball runs` and nothing else. The
+// quoted form is the command as the skills write it; the unquoted one covers
+// a matcher that reads the path as one word either way.
+const READ_RULES = [
+  'Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs *)',
+  "Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)",
+  "Bash(true)",
+];
+
+// Claude Code's documented Bash rule matching: the whole command text, `*`
+// for any text, a trailing ` *` also matching the bare command, and each
+// subcommand of `||` and friends matched on its own.
+function allowedBy(rules, subcommand) {
+  return rules.some((rule) => {
+    const pattern = rule.match(/^Bash\((.*)\)$/)?.[1];
+    if (pattern === undefined) return false;
+    const escaped = pattern.split("*").map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join(".*");
+    const regex = pattern.endsWith(" *") ? `^${escaped.slice(0, -3)}( .*)?$` : `^${escaped}$`;
+    return new RegExp(regex, "s").test(subcommand);
+  });
+}
+
+// ${CLAUDE_PROJECT_DIR} is where the session started, not the repo root, so
+// a missing runner may only mean Claude Code started in a subdirectory.
+test("a skill that can't find the runner says where it looked", () => {
+  for (const name of SKILLS) {
+    const { body } = skill(name);
+    if (!/doesn't exist/.test(body)) continue;
+    assert.match(body, /below the repo root/, name);
+  }
+});
+
+// An injected command runs before the model's turn, and $ARGUMENTS expands
+// to the argument string as given, so a model-invocable skill splicing it
+// into a command hands the shell whatever the model was talked into passing.
+// The arguments reach the skill appended to its content instead.
+test("no skill splices its arguments into its content", () => {
+  for (const name of SKILLS) {
+    assert.doesNotMatch(read(`plugin/skills/${name}/SKILL.md`), /\$(ARGUMENTS|\d)/, name);
+  }
+});
+
+// An injected command whose permission check isn't allow aborts the skill
+// outside auto mode, so every part of it must be pre-approved.
+test("each skill pre-approves every part of the commands it injects", () => {
+  for (const name of SKILLS) {
+    const { front, body } = skill(name);
+    const rules = [].concat(front["allowed-tools"] ?? []);
+    for (const command of [ ...body.matchAll(/!`([^`]+)`/g) ].map((match) => match[1])) {
+      for (const subcommand of command.split(/\s+(?:&&|\|\||;|\|&|\||&)\s+/)) {
+        assert.ok(allowedBy(rules, subcommand), `${name}: nothing in allowed-tools matches \`${subcommand}\``);
+      }
     }
   }
 });

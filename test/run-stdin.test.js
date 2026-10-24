@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { spawn, execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { spawn, spawnSync, execFileSync } from "node:child_process";
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -62,4 +62,35 @@ test("run exits promptly when stdin is a pipe nobody closes", async () => {
   // Generous: the point is bounded, not fast. A regression here means waiting
   // on the writer, which is unbounded rather than merely slow.
   assert.ok(elapsed < 10_000, `took ${elapsed}ms — expected a bounded wait`);
+});
+
+// A hook hands the runner its session; nothing else does. A run without one
+// was started by hand (a terminal, a dashboard re-run button) and is
+// journaled that way, so history views group it as such.
+const lastJournaled = (home) => JSON.parse(
+  readFileSync(join(home, ".highball", "runs", "stdin-fixture.jsonl"), "utf8").trim().split("\n").at(-1)
+);
+
+test("a run with no hook payload is journaled as manual", () => {
+  const dir = fixtureRepo();
+  const home = mkdtempSync(join(tmpdir(), "hb-stdin-home-"));
+  const child = spawnSync(process.execPath, [ CLI, "run", "--fast" ], {
+    cwd: dir, env: cliEnv({ HOME: home }), input: ""
+  });
+  assert.equal(child.status, 0);
+  const run = lastJournaled(home);
+  assert.equal(run.session, null);
+  assert.equal(run.manual, true);
+});
+
+test("a run a hook started carries its session and isn't manual", () => {
+  const dir = fixtureRepo();
+  const home = mkdtempSync(join(tmpdir(), "hb-stdin-home-"));
+  const child = spawnSync(process.execPath, [ CLI, "run", "--fast" ], {
+    cwd: dir, env: cliEnv({ HOME: home }), input: JSON.stringify({ session_id: "sess-1" })
+  });
+  assert.equal(child.status, 0);
+  const run = lastJournaled(home);
+  assert.equal(run.session, "sess-1");
+  assert.equal(run.manual, undefined);
 });

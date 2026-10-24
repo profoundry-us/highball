@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { appendRun, readRuns, journaledProjects, journalPath } from "../lib/journal.js";
+import {
+  appendRun, readRuns, journaledProjects, journalPath, resolveRunsLimit, workLabel
+} from "../lib/journal.js";
 
 const record = (n) => ({ started_at: `2026-08-11T0${n % 10}:00:00Z`, status: "passed", results: [] });
 
@@ -65,4 +67,19 @@ test("a record with an id replaces its earlier self instead of appending", () =>
   assert.deepEqual(runs.map((run) => run.id), [ "run-2", "run-1" ], "order is by first appearance, not last write");
   assert.equal(runs[1].status, "passed");
   assert.equal(runs[1].results.length, 2);
+});
+
+test("resolveRunsLimit: the call, then the env, then checks.yml, then the view's default", () => {
+  assert.equal(resolveRunsLimit({ env: {}, fallback: 200 }), 200);
+  assert.equal(resolveRunsLimit({ env: {}, config: { runs_limit: 40 }, fallback: 200 }), 40);
+  assert.equal(resolveRunsLimit({ env: { HIGHBALL_RUNS_LIMIT: "60" }, config: { runs_limit: 40 } }), 60);
+  assert.equal(resolveRunsLimit({ limit: 5, env: { HIGHBALL_RUNS_LIMIT: "60" } }), 5);
+  assert.equal(resolveRunsLimit({ limit: 0, env: { HIGHBALL_RUNS_LIMIT: "lots" }, fallback: 7 }), 7);
+});
+
+test("workLabel: the prompt, else run by hand, else no prompt recorded", () => {
+  assert.equal(workLabel({ session: "s1", work: "Fix the lint" }), "Fix the lint");
+  assert.equal(workLabel({ session: null, work: null }), "run by hand");
+  assert.equal(workLabel({ manual: true }), "run by hand");
+  assert.equal(workLabel({ session: "s1", work: null }), "(no prompt recorded)");
 });

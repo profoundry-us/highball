@@ -8,6 +8,40 @@ Release dates are the day the version was published to npm.
 
 ## [Unreleased]
 
+### Added
+
+- `highball runs` reads history from anywhere in the repo, not only its
+  root, and takes `--limit=N` to show the newest N runs (`runs_limit:` in
+  checks.yml or `HIGHBALL_RUNS_LIMIT` sets a default). See [Run history,
+  with no telemetry at all](README.md#run-history-with-no-telemetry-at-all).
+- Every run in `highball runs` shows a short id beside its number, and
+  `highball runs <id>` shows that run. Numbers shift whenever a run lands,
+  including one from another worktree of the same project; ids don't. See
+  [Run history, with no telemetry at
+  all](README.md#run-history-with-no-telemetry-at-all).
+- A failed rule's detail in `highball runs <n>` ends with the command it
+  ran, as `rerun by hand:`, for iterating on one failure. See [Run history,
+  with no telemetry at all](README.md#run-history-with-no-telemetry-at-all).
+- `highball runs --slowest[=N]` ranks rules by median and slowest time over
+  the last N full runs (default 20), or fast runs with `--fast`, with each
+  rule's share of a typical run and its timeouts. See [Run history, with no
+  telemetry at all](README.md#run-history-with-no-telemetry-at-all).
+
+### Changed
+
+- The MCP `run_checks` tool is for the dashboard widget's re-run buttons
+  only. It is marked app-only, so it stays out of the model's tool list, and
+  a host that can't render the widget doesn't get it at all. Starting a run
+  is the hooks' job. See [The MCP dashboard
+  widget](README.md#the-mcp-dashboard-widget).
+- A run with no agent session behind it (typed in a terminal, or a
+  dashboard re-run) is journaled as `manual` and grouped as "run by hand"
+  in `highball runs`, `list_runs` and the widget, instead of as "no session
+  context". See [Run history, with no telemetry at
+  all](README.md#run-history-with-no-telemetry-at-all).
+- `highball runs` refuses an option it doesn't know, or a `--limit=` or
+  `--slowest=` that isn't a positive whole number, instead of ignoring it.
+
 ## [0.9.0] - 2026-10-08
 
 ### Added

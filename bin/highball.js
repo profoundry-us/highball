@@ -30,10 +30,14 @@ Usage:
   highball onboard          Print the setup guide written for this repo's
                             AI agent — tell your agent to run this and
                             follow it.
-  highball runs [n]         Local run history (newest first) from
-                            ~/.highball/runs. With a number, that run's
-                            detail; add --logs for every rule's captured
-                            output.
+  highball runs [n | id]    Local run history (newest first) from
+                            ~/.highball/runs, from anywhere in the repo.
+                            --limit=N shows the newest N. With a run
+                            number or id, that run's detail; add --logs
+                            for every rule's captured output.
+                            --slowest[=N] ranks rules by time over the
+                            last N full runs (default 20), or fast runs
+                            with --fast.
   highball mcp              Serve run history over MCP (stdio), with an
                             MCP Apps dashboard widget for hosts that
                             render them (e.g. Claude Desktop).

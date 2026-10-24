@@ -36,8 +36,11 @@ Show what it printed as it is, in a code block. Then:
 Run numbers count from the newest run and shift whenever a new run lands, so
 prefer the id when you refer back to a run.
 
-If the output says the file or directory doesn't exist, Highball isn't
-installed in this checkout. Say so, and point at the repo's own install step.
+If the output says the file or directory doesn't exist, there's no
+`node_modules/.bin/highball` in `${CLAUDE_PROJECT_DIR}`, the directory Claude
+Code started in. If that directory is below the repo root (it has no `.git`),
+say Claude Code needs starting at the repo root. Otherwise Highball isn't
+installed in this checkout: say so, and point at the repo's own install step.
 Never fall back to `npx` or a global `highball`.
 
 Change nothing and start no run: the hooks run the checks. Say a check passed

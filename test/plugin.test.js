@@ -92,6 +92,16 @@ function allowedBy(rules, subcommand) {
   });
 }
 
+// ${CLAUDE_PROJECT_DIR} is where the session started, not the repo root, so
+// a missing runner may only mean Claude Code started in a subdirectory.
+test("a skill that can't find the runner says where it looked", () => {
+  for (const name of SKILLS) {
+    const { body } = skill(name);
+    if (!/doesn't exist/.test(body)) continue;
+    assert.match(body, /below the repo root/, name);
+  }
+});
+
 // An injected command runs before the model's turn, and $ARGUMENTS expands
 // to the argument string as given, so a model-invocable skill splicing it
 // into a command hands the shell whatever the model was talked into passing.

@@ -8,14 +8,23 @@ allowed-tools:
   - Bash(true)
 ---
 
-The Highball run asked for, from the journal on this machine:
+Recent Highball runs in this repo, from the journal on this machine:
 
-!`"${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs $ARGUMENTS 2>&1 || true`
+!`"${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs --limit=10 2>&1 || true`
 
-If no run was named, the output above is the list of recent runs instead. Ask
-which run to show, by number or id, and don't guess.
+The run asked for is in the arguments at the end of this skill. If none was
+named, show the list above and ask which run to show, by number or id. Don't
+guess.
 
-Otherwise show the output as it is, in a code block. Then:
+Otherwise run this once with the Bash tool, putting in the run's number or
+id, and `--logs` only if it was asked for:
+
+`"${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs <number or id>`
+
+A run is named by a number or a six-character hex id and nothing else. If
+the arguments hold anything else, say so and run nothing.
+
+Show what it printed as it is, in a code block. Then:
 
 - For each failed check, name it and quote the line of its output that says
   why. If it has a `rerun by hand:` line, give that command as the way to run

@@ -92,6 +92,16 @@ function allowedBy(rules, subcommand) {
   });
 }
 
+// An injected command runs before the model's turn, and $ARGUMENTS expands
+// to the argument string as given, so a model-invocable skill splicing it
+// into a command hands the shell whatever the model was talked into passing.
+// The arguments reach the skill appended to its content instead.
+test("no skill splices its arguments into its content", () => {
+  for (const name of SKILLS) {
+    assert.doesNotMatch(read(`plugin/skills/${name}/SKILL.md`), /\$(ARGUMENTS|\d)/, name);
+  }
+});
+
 // An injected command whose permission check isn't allow aborts the skill
 // outside auto mode, so every part of it must be pre-approved.
 test("each skill pre-approves every part of the commands it injects", () => {

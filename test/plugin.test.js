@@ -131,7 +131,11 @@ test("each skill pre-approves every part of the commands it injects", () => {
 test("setup can't be started by the model, and goes through init and onboard", () => {
   const { front, body } = skill("setup");
   assert.equal(front["disable-model-invocation"], true);
-  assert.equal(front["allowed-tools"], "Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball *)");
+  assert.deepEqual(front["allowed-tools"], [
+    'Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" *)',
+    "Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball *)",
+    "Bash(true)",
+  ]);
   assert.match(body, /node_modules\/\.bin\/highball init/);
   assert.match(body, /node_modules\/\.bin\/highball onboard/);
 });

@@ -2,7 +2,10 @@
 name: why-slow
 description: Which Highball checks a run's time goes to, ranked by median and slowest time over recent full runs, with each check's share of a typical run and its timeouts. Use when asked why Highball's turn-end checks are slow, which check takes longest, or where hook time goes.
 argument-hint: "[how many recent runs, default 20] [--fast]"
-allowed-tools: Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+allowed-tools:
+  - Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs *)
+  - Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+  - Bash(true)
 ---
 
 Where this repo's Highball time goes, from the journal on this machine:

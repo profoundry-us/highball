@@ -3,7 +3,10 @@ name: setup
 description: Set Highball up in this repo, or bring an existing setup up to date. Checks the runner version, the hooks in .claude/settings.json, .highball/.gitignore and the plugin keys, then proposes the edits and applies them on a yes.
 argument-hint: ""
 disable-model-invocation: true
-allowed-tools: Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball *)
+allowed-tools:
+  - Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" *)
+  - Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball *)
+  - Bash(true)
 ---
 
 Where Highball stands in this repo:

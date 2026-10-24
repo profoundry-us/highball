@@ -3,7 +3,8 @@
 //
 // A release is a bump commit that ships alone in its own PR, and this is
 // the script that writes it: it refuses to run anywhere but a clean main
-// that matches origin, bumps package.json, moves the changelog's
+// that matches origin, bumps package.json and the Claude Code plugin's
+// manifest, moves the changelog's
 // Unreleased section under a dated heading, commits on release/<version>,
 // pushes, and opens the PR with that section as its body. Then it puts
 // you back on main with the local branch gone.
@@ -19,6 +20,11 @@ import { fileURLToPath } from "node:url";
 
 const REPO = "profoundry-us/highball";
 const CHANGELOG = "CHANGELOG.md";
+// The plugin's version moves with the runner's. Claude Code reads it to
+// decide when an installed plugin is out of date; left unset it would
+// version the plugin by commit, and every merge to main would reach
+// auto-updating users before the npm release its skills were written for.
+const PLUGIN_MANIFEST = "plugin/.claude-plugin/plugin.json";
 
 // --- the pure part: what the changelog looks like after the cut ---
 
@@ -48,6 +54,14 @@ export function cutChangelog(text, version, date) {
       `[${version}]: https://github.com/${REPO}/compare/v${previousVersion}...v${version}`);
 }
 
+// The plugin manifest with its version set to `version`, every other field
+// and its order kept.
+export function bumpPluginManifest(text, version) {
+  const manifest = JSON.parse(text);
+  manifest.version = version;
+  return JSON.stringify(manifest, null, 2) + "\n";
+}
+
 // The changelog section for `version`, for the PR body.
 export function sectionFor(text, version) {
   const heading = `## [${version}] - `;
@@ -69,6 +83,10 @@ function preflight(version) {
   if (!/^\d+\.\d+\.\d+$/.test(version)) problems.push(`"${version}" is not a plain X.Y.Z version.`);
   const current = JSON.parse(readFileSync("package.json", "utf8")).version;
   if (version === current) problems.push(`package.json is already at ${version}.`);
+  const plugin = JSON.parse(readFileSync(PLUGIN_MANIFEST, "utf8")).version;
+  if (plugin !== current) {
+    problems.push(`${PLUGIN_MANIFEST} is at ${plugin} but package.json is at ${current}; they move together.`);
+  }
   if (sh("git", [ "branch", "--show-current" ]) !== "main") problems.push("Not on main.");
   // Untracked files are fine (only named files are committed); tracked
   // changes are not — they would ride along in the release commit.
@@ -112,7 +130,7 @@ function main(argv) {
   const changelog = cutChangelog(readFileSync(CHANGELOG, "utf8"), version, date);
   const section = sectionFor(changelog, version);
   const body = [
-    `The version bump for ${version}. The changelog's Unreleased section moves under the version; nothing else changes.`,
+    `The version bump for ${version}, in package.json and the Claude Code plugin's manifest. The changelog's Unreleased section moves under the version; nothing else changes.`,
     "",
     `## What ${version} ships`,
     "",
@@ -131,9 +149,10 @@ function main(argv) {
   }
 
   sh("npm", [ "version", version, "--no-git-tag-version" ]);
+  writeFileSync(PLUGIN_MANIFEST, bumpPluginManifest(readFileSync(PLUGIN_MANIFEST, "utf8"), version));
   writeFileSync(CHANGELOG, changelog);
   sh("git", [ "checkout", "-q", "-b", branch ]);
-  sh("git", [ "add", "package.json", "package-lock.json", CHANGELOG ]);
+  sh("git", [ "add", "package.json", "package-lock.json", PLUGIN_MANIFEST, CHANGELOG ]);
   sh("git", [ "commit", "-q", "-m", `v${version}` ]);
   sh("git", [ "push", "-q", "-u", "origin", branch ]);
   const url = sh("gh", [ "pr", "create", "--repo", REPO, "--title", `v${version}`, "--body", body ]);

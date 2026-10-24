@@ -1,0 +1,13 @@
+{
+  "name": "highball",
+  "version": "0.9.0",
+  "description": "Highball's run history in Claude Code: recent runs grouped by prompt, and one run's checks with their timings",
+  "author": {
+    "name": "Profoundry",
+    "email": "topher@profoundry.us"
+  },
+  "homepage": "https://highball.profoundry.us",
+  "repository": "https://github.com/profoundry-us/highball",
+  "license": "MIT",
+  "keywords": [ "highball", "checks", "hooks", "ci" ]
+}

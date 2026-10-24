@@ -24,6 +24,8 @@ for (const file of changed) {
   let stem = null;
   if (/^lib\/[^/]+\.js$/.test(file)) stem = basename(file, ".js");
   else if (/^test\/[^/]+\.test\.js$/.test(file)) stem = basename(file, ".test.js");
+  // The plugin is markdown and JSON; its rules live in test/plugin.test.js.
+  else if (/^(plugin|\.claude-plugin)\//.test(file)) stem = "plugin";
   if (!stem) continue;
   for (const candidate of readdirSync("test")) {
     const match = candidate.match(/^(.+)\.test\.js$/);

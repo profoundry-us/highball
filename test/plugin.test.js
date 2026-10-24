@@ -53,9 +53,10 @@ test("every skill is named for its directory and says when it applies", () => {
 test("skills call the project's own runner, never npx", () => {
   for (const name of SKILLS) {
     const { front, body } = skill(name);
-    // The one place npx may appear is the line forbidding it.
-    assert.doesNotMatch(body.replaceAll("Never fall back to `npx`", ""), /\bnpx\b/,
-      `${name} mentions npx other than to forbid it`);
+    // npx may appear only where a skill forbids it, or flags it in a hook.
+    const allowed = [ "Never fall back to `npx`", "Flag any\n  that use `npx`" ];
+    const rest = allowed.reduce((text, phrase) => text.replaceAll(phrase, ""), body);
+    assert.doesNotMatch(rest, /\bnpx\b/, `${name} mentions npx other than to forbid it`);
     const injected = [ ...body.matchAll(/!`([^`]+)`/g) ].map((match) => match[1]);
     assert.ok(injected.length > 0, `${name} injects no command`);
     for (const command of injected) {
@@ -67,6 +68,21 @@ test("skills call the project's own runner, never npx", () => {
     if (!MAY_RUN.has(name)) {
       assert.equal(front["allowed-tools"], "Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)");
     }
+  }
+});
+
+// setup writes files, so only a person starts it.
+test("setup can't be started by the model, and goes through init and onboard", () => {
+  const { front, body } = skill("setup");
+  assert.equal(front["disable-model-invocation"], true);
+  assert.equal(front["allowed-tools"], "Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball *)");
+  assert.match(body, /node_modules\/\.bin\/highball init/);
+  assert.match(body, /node_modules\/\.bin\/highball onboard/);
+});
+
+test("skills that only read can be invoked by the model", () => {
+  for (const name of SKILLS.filter((skillName) => !MAY_RUN.has(skillName))) {
+    assert.notEqual(skill(name).front["disable-model-invocation"], true, name);
   }
 });
 

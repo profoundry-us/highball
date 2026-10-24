@@ -16,14 +16,14 @@ run's result and, if it failed, which checks failed. Point at `/highball:show`
 with that run's id for the detail.
 
 If the output says the file or directory doesn't exist, there's no
-`node_modules/.bin/highball` in `${CLAUDE_PROJECT_DIR}`, the directory Claude
-Code started in. If that directory is below the repo root (it has no `.git`),
-say Claude Code needs starting at the repo root, where the runner is and
-where the hooks in `.claude/settings.json` load. Otherwise Highball isn't
-installed in this checkout: say so, and point at the repo's own install step
-(`npm ci`, `yarn install`, `pnpm install`). Never fall back to `npx` or a
-global `highball`. If it says this isn't a configured repo, this repo doesn't
-use Highball.
+`node_modules/.bin/highball` in `${CLAUDE_PROJECT_DIR}`, the directory
+Claude Code started in. If that directory has no `package.json` and one
+above it does, it is below the repo root: say Claude Code needs starting at
+the repo root, where the runner is and where the hooks in
+`.claude/settings.json` load. Otherwise Highball isn't installed in this
+checkout: say so, and point at the repo's own install step (`npm ci`,
+`yarn install`, `pnpm install`). Never fall back to `npx` or a global
+`highball`. If it says this isn't a configured repo, this repo doesn't use Highball.
 
 If the list runs past 25 runs or has no id column, this project's Highball is
 older than 0.10. Show the newest 25 and say that upgrading the dev dependency

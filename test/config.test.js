@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { DEFAULT_TIMEOUTS, commandFor, loadConfig, timeoutFor } from "../lib/config.js";
+import { DEFAULT_TIMEOUTS, commandFor, findConfigRoot, loadConfig, timeoutFor } from "../lib/config.js";
 
 test("commandFor refuses to shell out for a rubric rule", () => {
   const rule = { rubric: ".highball/packs/rails/rubrics/architecture.md" };
@@ -160,4 +160,15 @@ test("parallel: must be a boolean, and concurrency: a whole number of at least 1
 test("checks.local.yml may set concurrency, and it's validated there too", () => {
   assert.equal(loadConfig(repoWithLocal(BASE + "concurrency: 4\n", "concurrency: 1\n")).concurrency, 1);
   assert.throws(() => loadConfig(repoWithLocal(BASE, "concurrency: -1\n")), /checks\.local\.yml: `concurrency:`/);
+});
+
+test("findConfigRoot finds checks.yml at or above the start, or returns null", () => {
+  const root = mkdtempSync(join(tmpdir(), "hb-root-"));
+  mkdirSync(join(root, ".highball"));
+  writeFileSync(join(root, ".highball", "checks.yml"), "project: x\nchecks: []\n");
+  mkdirSync(join(root, "app", "models"), { recursive: true });
+
+  assert.equal(findConfigRoot(root), root);
+  assert.equal(findConfigRoot(join(root, "app", "models")), root);
+  assert.equal(findConfigRoot(mkdtempSync(join(tmpdir(), "hb-noroot-"))), null);
 });

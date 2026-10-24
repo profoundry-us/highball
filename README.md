@@ -459,14 +459,22 @@ Events are attributed to `git config user.email`, falling back to
 
 ## The MCP dashboard widget
 
-`highball mcp` serves the journal over MCP (stdio) with three tools —
-`list_runs`, `get_run`, `run_checks` — and an
+`highball mcp` serves the journal over MCP (stdio) with two tools for
+reading it, `list_runs` and `get_run`, and an
 [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) widget:
 in hosts that render Apps (Claude Desktop and friends), asking about your
 checks produces an interactive inline dashboard — click a run for per-rule
 detail with expandable command output, re-run fast or full checks from a
 button. In hosts without Apps support the same tools answer in plain text,
-per the extension's graceful-degradation rule. Register it with the scoped
+per the extension's graceful-degradation rule.
+
+The re-run buttons call a third tool, `run_checks`, which only the widget
+can use. Starting a run is the hooks' job: a run an agent starts mid-turn
+has no session behind it, so it lands outside the prompt it belongs to,
+and the Stop hook runs the same checks at turn end anyway. So `run_checks`
+is marked app-only (`visibility: ["app"]`), which keeps it out of the
+model's tool list, and a host that can't render the widget doesn't get it
+at all. A run it starts is journaled as run by hand. Register it with the scoped
 name — hosts spawn the server from an arbitrary directory, so it resolves
 from the registry rather than a local install:
 
@@ -503,9 +511,38 @@ Desktop restart.
 
 Every run appends to a local journal (`~/.highball/runs/<project>.jsonl`,
 pruned to the last 200) — unconditionally, whether or not reporting is
-configured. `npx @profoundry-us/highball runs` lists recent runs; adding a
-number shows one run's detail with failure output, and `--logs` prints every
-rule's captured output, GitHub-Actions-style.
+configured. `highball runs` lists recent runs from anywhere in the repo,
+grouped under the prompt that started them; a run nobody's agent session
+started (one typed in a terminal, or a dashboard re-run) is grouped as
+"run by hand". Each run shows a number (`#1` is the newest) and a short
+id. Either one shows that run's detail with failure output, and `--logs`
+prints every rule's captured output, GitHub-Actions-style. Numbers shift
+whenever a run lands, including one from another worktree of the same
+project, which shares the journal; ids don't.
+
+```
+highball runs                  # every journaled run
+highball runs --limit=25       # the newest 25 (runs_limit in checks.yml sets a default)
+highball runs 3                # run #3's detail
+highball runs 4f2a1c --logs    # the same, by id, with every rule's output
+highball runs --slowest        # rules ranked by time over the last 20 full runs
+highball runs --slowest=50 --fast
+```
+
+A failed rule's detail ends with the command it ran, as `rerun by hand:`,
+through `exec.via` when the rule was wrapped. That's for iterating on one
+failure without the whole suite. Run that way, a rule doesn't see
+`HIGHBALL_CHANGED_FILES` or its timeout, and nothing is journaled; the
+hooks still check the result. AI-judged rules have no command to offer.
+
+`--slowest` shows each rule's median and slowest time, its share of a
+typical run, and how often it timed out: where to look when a turn-end run
+drags. Rules running side by side overlap, so their shares can add up past
+100%.
+
+Options that take a value are written `--name=value`. Runners before 0.10
+read a bare number as a run to show, so `--limit 25` would have shown run
+#25 there.
 
 The journal is the richer of the two records: it keeps the last 10KB per rule
 pass or fail, while PostHog gets a one-line summary and no logs at all. So the

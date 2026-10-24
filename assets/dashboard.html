@@ -228,7 +228,7 @@
     const rows = sc.runs.map((run) => {
       const group = `${run.session ?? ""}·${run.work ?? ""}`;
       const heading = group === lastGroup ? "" :
-        `<div class="group">${run.work ? "&ldquo;" + esc(run.work) + "&rdquo;" : "no session context"}</div>`;
+        `<div class="group">${run.work ? "&ldquo;" + esc(run.work) + "&rdquo;" : run.manual ? "run by hand" : "no prompt recorded"}</div>`;
       lastGroup = group;
       return heading + `
       <div class="row" data-index="${run.index}">

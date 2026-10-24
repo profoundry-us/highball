@@ -571,13 +571,15 @@ The `highball` plugin puts run history in Claude Code's slash menu:
 Install it for yourself, in every project:
 
 ```bash
-claude plugin install highball --marketplace profoundry-us/highball
+claude plugin marketplace add profoundry-us/highball
+claude plugin install highball@highball
 ```
 
-Or in a session, `/plugin install highball --marketplace profoundry-us/highball`.
-On Claude Code before 2.1.275, add the marketplace first with
-`/plugin marketplace add profoundry-us/highball`, then
-`/plugin install highball@highball`.
+On Claude Code 2.1.292 or later, `claude plugin install highball
+--marketplace profoundry-us/highball` does both in one step. In a session,
+`/plugin marketplace add profoundry-us/highball` then
+`/plugin install highball@highball` does the same, or, from 2.1.275,
+`/plugin install highball --marketplace profoundry-us/highball`.
 
 Or enable it for a whole team by committing these two keys to the project's
 `.claude/settings.json`, beside the hooks:

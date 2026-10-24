@@ -10,13 +10,22 @@ allowed-tools:
 
 Where this repo's Highball time goes, from the journal on this machine:
 
-!`"${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs --slowest $ARGUMENTS 2>&1 || true`
+!`"${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs --slowest 2>&1 || true`
 
 If the output is a list of runs rather than a "Slowest checks" table, this
 project's Highball is older than 0.10, which added the ranking. Say so, say
 that upgrading the dev dependency adds it, and stop.
 
-Otherwise show the table as it is, in a code block. Then read
+The table above covers up to the last 20 full runs. If the arguments at the
+end of this skill ask for another number of runs or for `--fast`, run this
+once with the Bash tool instead and use its table, putting in only a whole
+number and `--fast` as asked:
+
+`"${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs --slowest <runs> --fast`
+
+If the arguments hold anything else, say so and run nothing.
+
+Show the table as it is, in a code block. Then read
 `.highball/checks.yml` and, for the one to three checks that take most of a
 run, say which of these levers fits, using the check's own config:
 

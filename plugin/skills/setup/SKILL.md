@@ -4,9 +4,10 @@ description: Set Highball up in this repo, or bring an existing setup up to date
 argument-hint: ""
 disable-model-invocation: true
 allowed-tools:
-  - Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" *)
-  - Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball *)
-  - Bash(node_modules/.bin/highball *)
+  - Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs *)
+  - Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+  - Bash(node_modules/.bin/highball runs *)
+  - Bash(node_modules/.bin/highball onboard)
   - Bash(npm view @profoundry-us/highball version)
   - Bash(true)
 ---
@@ -48,7 +49,8 @@ plugin keys and the proofs that they work.
 ## 3. Audit an existing setup
 
 Report each item as a table row: what you found, and the fix if one is due.
-Read files to audit; don't run `init` yet, since it adds `.gitignore` lines.
+The audit needs only file reads and `npm view`. Don't run `init` yet: it
+adds `.gitignore` lines, and the hooks and keys it would print are below.
 
 - **Runner version.** Read the installed version from the `version` field
   of `node_modules/@profoundry-us/highball/package.json` (the runner has no

@@ -5,6 +5,7 @@ argument-hint: "<run number or id> [--logs]"
 allowed-tools:
   - Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs *)
   - Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+  - Bash(node_modules/.bin/highball runs *)
   - Bash(true)
 ---
 

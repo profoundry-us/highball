@@ -72,10 +72,13 @@ test("skills call the project's own runner, never npx", () => {
 
 // The Bash rules that pre-approve `highball runs` and nothing else. The
 // quoted form is the command as the skills write it; the unquoted one covers
-// a matcher that reads the path as one word either way.
+// a matcher that reads the path as one word either way. The relative one
+// covers a model that shortens the path when it runs a command itself, which
+// it does: the session starts at the repo root, so it's the same runner.
 const READ_RULES = [
   'Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs *)',
   "Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)",
+  "Bash(node_modules/.bin/highball runs *)",
   "Bash(true)",
 ];
 
@@ -121,6 +124,26 @@ test("each skill pre-approves every part of the commands it injects", () => {
     for (const command of [ ...body.matchAll(/!`([^`]+)`/g) ].map((match) => match[1])) {
       for (const subcommand of command.split(/\s+(?:&&|\|\||;|\|&|\||&)\s+/)) {
         assert.ok(allowedBy(rules, subcommand), `${name}: nothing in allowed-tools matches \`${subcommand}\``);
+      }
+    }
+  }
+});
+
+// A command the skill tells the model to run goes through the Bash tool's
+// permission check, so it must be pre-approved as written and with the path
+// shortened to node_modules/.bin, or the model stalls on a prompt.
+test("each skill pre-approves the commands it tells the model to run", () => {
+  const RUNNER = '"${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball"';
+  for (const name of SKILLS) {
+    const { front, body } = skill(name);
+    const rules = [].concat(front["allowed-tools"] ?? []);
+    const prose = body.replace(/!`[^`]+`/g, "");
+    const told = [ ...prose.matchAll(/`([^`\n]+)`/g) ].map((match) => match[1])
+      .filter((command) => command.startsWith(RUNNER) || command.startsWith("node_modules/.bin/highball "));
+    for (const command of told) {
+      const relative = command.replace(RUNNER, "node_modules/.bin/highball");
+      for (const form of [ command, relative ]) {
+        assert.ok(allowedBy(rules, form), `${name}: nothing in allowed-tools matches \`${form}\``);
       }
     }
   }

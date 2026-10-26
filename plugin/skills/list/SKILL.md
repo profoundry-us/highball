@@ -4,6 +4,7 @@ description: Recent Highball check runs in this repo, newest first, grouped by t
 allowed-tools:
   - Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs *)
   - Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+  - Bash(node_modules/.bin/highball runs *)
   - Bash(true)
 ---
 

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cutChangelog, sectionFor } from "../dev/release.js";
+import { bumpPluginManifest, cutChangelog, sectionFor } from "../dev/release.js";
 
 const LOG = [
   "# Changelog",
@@ -49,4 +49,13 @@ test("cutChangelog refuses an empty section, a re-release, and a log without the
   assert.throws(() => cutChangelog(LOG, "0.8.0", "2026-10-01"), /already released/);
   assert.throws(() => cutChangelog(LOG.replace(/^\[Unreleased\]: .*\n/m, ""), "0.9.0", "2026-10-01"), /no "\[Unreleased\]:/);
   assert.throws(() => cutChangelog("# nothing\n", "0.9.0", "2026-10-01"), /no "## \[Unreleased\]"/);
+});
+
+test("bumpPluginManifest sets the version and keeps everything else in order", () => {
+  const before = '{\n  "name": "highball",\n  "version": "0.9.0",\n  "description": "x",\n  "keywords": [ "a" ]\n}\n';
+  const after = bumpPluginManifest(before, "0.10.0");
+  assert.deepEqual(Object.keys(JSON.parse(after)), [ "name", "version", "description", "keywords" ]);
+  assert.equal(JSON.parse(after).version, "0.10.0");
+  assert.equal(JSON.parse(after).description, "x");
+  assert.ok(after.endsWith("}\n"));
 });

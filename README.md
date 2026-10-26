@@ -559,6 +559,61 @@ tree down with it and journaled which rule it was in. A rule that ran past
 its budget is `failed` with `timed_out`. None of these used to leave a
 trace, which is exactly when a trace was needed.
 
+## Claude Code plugin
+
+The `highball` plugin puts run history in Claude Code's slash menu:
+
+| Skill | What it shows |
+|---|---|
+| `/highball:list` | The newest 25 runs, grouped by the prompt that started them: each run's number, id, age, fast or full, duration and result |
+| `/highball:show <number or id>` | One run's checks with their timings and failure output, the command to rerun a failed check by hand, and how to get its full logs |
+
+Install it for yourself, in every project:
+
+```bash
+claude plugin marketplace add profoundry-us/highball
+claude plugin install highball@highball
+```
+
+On Claude Code 2.1.292 or later, `claude plugin install highball
+--marketplace profoundry-us/highball` does both in one step. In a session,
+`/plugin marketplace add profoundry-us/highball` then
+`/plugin install highball@highball` does the same, or, from 2.1.275,
+`/plugin install highball --marketplace profoundry-us/highball`.
+
+Or enable it for a whole team by committing these two keys to the project's
+`.claude/settings.json`, beside the hooks:
+
+```json
+"extraKnownMarketplaces": {
+  "highball": {
+    "source": { "source": "github", "repo": "profoundry-us/highball" },
+    "autoUpdate": true
+  }
+},
+"enabledPlugins": { "highball@highball": true }
+```
+
+Each teammate gets it once they trust the folder. `autoUpdate` is off by
+default for marketplaces outside Anthropic's, and with it on a release
+reaches everyone without an update step.
+
+The skills are thin. Each one runs the project's own
+`node_modules/.bin/highball runs` and reports what it printed, so they show
+whatever runner the project has installed. Like the hooks, they need
+Claude Code started at the repo root: it reads `.claude/settings.json` and
+sets `CLAUDE_PROJECT_DIR` from the directory it starts in, so in a session
+started in a subdirectory the skills can't find the runner, and say so.
+They never fall back to `npx` or a global `highball`. They never start a
+run either: the hooks run the checks, and a run started by hand has no
+session behind it, so it lands outside the prompt it belongs to. The
+plugin ships no hooks of its own. The hooks in the committed
+`settings.json` stay the enforcement, so a teammate without the plugin is
+checked the same as everyone else.
+
+The plugin lives in `plugin/` and isn't part of the npm package. Its version
+moves with the runner's at each release.
+
 ## Releasing
 
 Maintainers: see [RELEASING.md](RELEASING.md). In short, `npm run release --

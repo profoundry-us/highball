@@ -1,8 +1,8 @@
 # Releasing
 
 A release is one commit that ships alone in its own PR: the version bump,
-the lockfile, and the changelog's Unreleased section moved under a dated
-heading. Nothing else rides with it. Feature PRs land first, each adding its
+the lockfile, the Claude Code plugin's manifest, and the changelog's
+Unreleased section moved under a dated heading. Nothing else rides with it. Feature PRs land first, each adding its
 notes under `## [Unreleased]` in `CHANGELOG.md`; the release comes last, on
 top of main, when the maintainer says so.
 
@@ -20,11 +20,12 @@ top of main, when the maintainer says so.
 
    The script refuses unless every check passes, and says which one didn't:
    on main, no tracked changes, main equal to `origin/main`, no `v0.9.0` tag
-   on origin, `gh` authenticated, and an Unreleased section with something in
-   it. Add `--dry-run` to see the changelog section and the PR body it would
+   on origin, `gh` authenticated, the plugin manifest at the same version as
+   `package.json`, and an Unreleased section with something in it. Add `--dry-run` to see the changelog section and the PR body it would
    write without touching anything.
 
-   When it runs, it bumps `package.json` and the lockfile, moves Unreleased
+   When it runs, it bumps `package.json`, the lockfile and
+   `plugin/.claude-plugin/plugin.json`, moves Unreleased
    under `## [0.9.0] - <today>` with a fresh empty Unreleased above it,
    repoints the compare links, commits `v0.9.0` on `release/0.9.0`, pushes,
    and opens the PR with the changelog section as its body. It leaves you on
@@ -43,6 +44,16 @@ top of main, when the maintainer says so.
    npm's registry can lag the publish by a few minutes before the new
    version shows as `latest`; that is npm, not the workflow. The site's
    version link reads the registry and needs no deploy.
+
+## Why the plugin's version moves too
+
+The Claude Code plugin in `plugin/` is listed by the repo's own marketplace
+and installed from git, not npm. Claude Code reads the manifest's `version`
+to decide when an installed copy is out of date. With no version it would
+use the commit instead, and every merge to main would reach auto-updating
+users before the npm release whose `highball runs` options the skills were
+written for. So the version is set, it equals `package.json`'s (a test
+holds them together), and it moves only here.
 
 ## Why nobody pushes a tag
 

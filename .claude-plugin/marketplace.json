@@ -1,0 +1,15 @@
+{
+  "name": "highball",
+  "owner": {
+    "name": "Profoundry",
+    "email": "topher@profoundry.us"
+  },
+  "description": "Highball's own marketplace: the highball plugin, which puts a repo's Highball run history in Claude Code's slash menu",
+  "plugins": [
+    {
+      "name": "highball",
+      "source": "./plugin",
+      "description": "Highball's run history as slash commands: recent runs, and one run's checks"
+    }
+  ]
+}

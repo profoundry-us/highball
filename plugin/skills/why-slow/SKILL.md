@@ -5,6 +5,7 @@ argument-hint: "[how many recent runs, default 20] [--fast]"
 allowed-tools:
   - Bash("${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" runs *)
   - Bash(${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball runs *)
+  - Bash(node_modules/.bin/highball runs *)
   - Bash(true)
 ---
 

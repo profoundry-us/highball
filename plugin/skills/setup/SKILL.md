@@ -48,6 +48,7 @@ plugin keys and the proofs that they work.
 ## 3. Audit an existing setup
 
 Report each item as a table row: what you found, and the fix if one is due.
+Read files to audit; don't run `init` yet, since it adds `.gitignore` lines.
 
 - **Runner version.** Read the installed version from the `version` field
   of `node_modules/@profoundry-us/highball/package.json` (the runner has no

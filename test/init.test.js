@@ -58,7 +58,7 @@ test("init leaves out the fast hook when an existing checks.yml has no fast rule
 
   const out = runInit(dir);
   assert.match(out, /Stop hook only/);
-  assert.match(out, /created \.claude\/settings\.json \(full suite at turn end\)/);
+  assert.match(out, /created \.claude\/settings\.json \(full suite at turn end, the \/highball: skills\)/);
 
   const { hooks } = settings(dir);
   assert.equal(hooks.PostToolUse, undefined);
@@ -106,4 +106,27 @@ test("init gitignores checks.local.yml, and adds the line to an older install's 
   assert.ok(updated.split("\n").includes("checks.local.yml"));
 
   assert.match(runInit(older), /kept existing \.highball\/\.gitignore/);
+});
+
+// The plugin rides along with the hooks: the /highball: skills for everyone
+// who trusts the folder, from the repo's own marketplace.
+test("init enables the highball plugin from its own marketplace", () => {
+  const dir = mkdtempSync(join(tmpdir(), "hb-init-"));
+  assert.match(runInit(dir), /the \/highball: skills/);
+  const written = settings(dir);
+  assert.deepEqual(written.enabledPlugins, { "highball@highball": true });
+  assert.deepEqual(written.extraKnownMarketplaces.highball.source,
+    { source: "github", repo: "profoundry-us/highball" });
+  assert.equal(written.extraKnownMarketplaces.highball.autoUpdate, true);
+});
+
+test("init prints the plugin keys beside the hooks when settings.json exists", () => {
+  const dir = mkdtempSync(join(tmpdir(), "hb-init-"));
+  mkdirSync(join(dir, ".claude"));
+  writeFileSync(join(dir, ".claude", "settings.json"), "{}\n");
+  const out = runInit(dir);
+  assert.match(out, /merge these hooks and plugin keys yourself/);
+  const snippet = JSON.parse(out.slice(out.indexOf("{"), out.lastIndexOf("}") + 1));
+  assert.deepEqual(Object.keys(snippet), [ "hooks", "extraKnownMarketplaces", "enabledPlugins" ]);
+  assert.equal(readFileSync(join(dir, ".claude", "settings.json"), "utf8"), "{}\n", "never edited");
 });

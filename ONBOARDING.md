@@ -127,6 +127,13 @@ The hooks it writes call the installed package directly
 in a few milliseconds, and `npx` would add ~180ms to each one just to
 resolve to the same file. Keep that form when you merge by hand.
 
+The settings it writes, or prints, also enable the `highball` Claude Code
+plugin from Highball's own marketplace (`extraKnownMarketplaces.highball`
+and `enabledPlugins["highball@highball"]`). That gives everyone who trusts
+the folder `/highball:list`, `/highball:show`, `/highball:why-slow` and
+`/highball:setup`. Merge those keys too. They add skills only, so the hooks
+stay the enforcement.
+
 If an existing `checks.yml` has no `fast: true` rule, init scaffolds the
 Stop hook only. A fast hook with nothing to run still costs node startup
 and a git status on every tool call, for nothing.
@@ -254,6 +261,7 @@ PostHog receives.
 Tell your human, concretely: which rules you wired and why each is
 fast/turn-end/todo; what you deliberately did NOT gate (slow suites,
 live-server tests); that hooks now block your turns on failures and how
-to remove them (`.claude/settings.json`) if they ever need to; and whether
-you wired telemetry or left it off. Follow this repo's own norms about
+to remove them (`.claude/settings.json`) if they ever need to; whether
+you wired telemetry or left it off; and that `/highball:list` shows the run
+history from inside Claude Code. Follow this repo's own norms about
 committing the new files — do not commit without being asked.

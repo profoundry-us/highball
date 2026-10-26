@@ -53,9 +53,10 @@ test("every skill is named for its directory and says when it applies", () => {
 test("skills call the project's own runner, never npx", () => {
   for (const name of SKILLS) {
     const { front, body } = skill(name);
-    // The one place npx may appear is the line forbidding it.
-    assert.doesNotMatch(body.replaceAll("Never fall back to `npx`", ""), /\bnpx\b/,
-      `${name} mentions npx other than to forbid it`);
+    // npx may appear only where a skill forbids it, or flags it in a hook.
+    const allowed = [ "Never fall back to `npx`", "Flag any\n  that use `npx`" ];
+    const rest = allowed.reduce((text, phrase) => text.replaceAll(phrase, ""), body);
+    assert.doesNotMatch(rest, /\bnpx\b/, `${name} mentions npx other than to forbid it`);
     const injected = [ ...body.matchAll(/!`([^`]+)`/g) ].map((match) => match[1]);
     assert.ok(injected.length > 0, `${name} injects no command`);
     for (const command of injected) {
@@ -129,9 +130,40 @@ test("each skill pre-approves every part of the commands it injects", () => {
   }
 });
 
+// setup writes files, so only a person starts it.
+test("setup can't be started by the model, and goes through init and onboard", () => {
+  const { front, body } = skill("setup");
+  assert.equal(front["disable-model-invocation"], true);
+  // Only what reads is pre-approved, so init and the verifying run still
+  // ask, even if the model reaches for them before the person says yes.
+  assert.deepEqual(front["allowed-tools"], [
+    ...READ_RULES.slice(0, -1),
+    "Bash(node_modules/.bin/highball onboard)",
+    "Bash(npm view @profoundry-us/highball version)",
+    "Bash(true)",
+  ]);
+  const rules = front["allowed-tools"];
+  for (const command of [
+    "node_modules/.bin/highball init",
+    '"${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball" init',
+    "node node_modules/@profoundry-us/highball/bin/highball.js run --if-changed",
+  ]) {
+    assert.ok(!allowedBy(rules, command), `setup pre-approves \`${command}\``);
+  }
+  assert.match(body, /node_modules\/\.bin\/highball init/);
+  assert.match(body, /node_modules\/\.bin\/highball onboard/);
+});
+
+test("skills that only read can be invoked by the model", () => {
+  for (const name of SKILLS.filter((skillName) => !MAY_RUN.has(skillName))) {
+    assert.notEqual(skill(name).front["disable-model-invocation"], true, name);
+  }
+});
+
 // A command the skill tells the model to run goes through the Bash tool's
 // permission check, so it must be pre-approved as written and with the path
-// shortened to node_modules/.bin, or the model stalls on a prompt.
+// shortened to node_modules/.bin, or the model stalls on a prompt. init is
+// the exception: it writes, so it asks.
 test("each skill pre-approves the commands it tells the model to run", () => {
   const RUNNER = '"${CLAUDE_PROJECT_DIR}/node_modules/.bin/highball"';
   for (const name of SKILLS) {
@@ -139,7 +171,8 @@ test("each skill pre-approves the commands it tells the model to run", () => {
     const rules = [].concat(front["allowed-tools"] ?? []);
     const prose = body.replace(/!`[^`]+`/g, "");
     const told = [ ...prose.matchAll(/`([^`\n]+)`/g) ].map((match) => match[1])
-      .filter((command) => command.startsWith(RUNNER) || command.startsWith("node_modules/.bin/highball "));
+      .filter((command) => command.startsWith(RUNNER) || command.startsWith("node_modules/.bin/highball "))
+      .filter((command) => !/ init$/.test(command));
     for (const command of told) {
       const relative = command.replace(RUNNER, "node_modules/.bin/highball");
       for (const form of [ command, relative ]) {

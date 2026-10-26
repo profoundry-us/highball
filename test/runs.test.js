@@ -22,6 +22,15 @@ test("parseRunsArgs reads the target and every flag", () => {
     { target: null, logs: false, fast: true, limit: null, slowest: 5 });
 });
 
+// The why-slow skill passes whatever was typed after `--slowest`.
+test("parseRunsArgs reads `--slowest N` as a count, and refuses a run beside it", () => {
+  assert.deepEqual(parseRunsArgs([ "--slowest", "50", "--fast" ]),
+    { target: null, logs: false, fast: true, limit: null, slowest: 50 });
+  assert.match(parseRunsArgs([ "--slowest", "0" ]).error, /positive whole number/);
+  assert.match(parseRunsArgs([ "--slowest", "c7d855" ]).error, /give it a count, not a run/);
+  assert.match(parseRunsArgs([ "--slowest=5", "3" ]).error, /give it a count, not a run/);
+});
+
 // A typo'd limit that quietly showed everything would read as a working one.
 test("parseRunsArgs refuses bad values and unknown options", () => {
   assert.match(parseRunsArgs([ "--limit=0" ]).error, /positive whole number/);

@@ -19,6 +19,10 @@ Release dates are the day the version was published to npm.
   `node_modules/.bin/highball runs` and never start a run. The plugin lives
   in the repo, not the npm package, and releases move its version with the
   runner's. See [Claude Code plugin](README.md#claude-code-plugin).
+- `/highball:why-slow` ranks the checks a run's time goes to and says which
+  lever in `checks.yml` fits each slow one, and `/highball:setup` sets
+  Highball up or audits an existing setup, applying its edits on a yes. See
+  [Claude Code plugin](README.md#claude-code-plugin).
 
 - `highball runs` reads history from anywhere in the repo, not only its
   root, and takes `--limit=N` to show the newest N runs (`runs_limit:` in
@@ -32,13 +36,16 @@ Release dates are the day the version was published to npm.
 - A failed rule's detail in `highball runs <n>` ends with the command it
   ran, as `rerun by hand:`, for iterating on one failure. See [Run history,
   with no telemetry at all](README.md#run-history-with-no-telemetry-at-all).
-- `highball runs --slowest[=N]` ranks rules by median and slowest time over
-  the last N full runs (default 20), or fast runs with `--fast`, with each
-  rule's share of a typical run and its timeouts. See [Run history, with no
-  telemetry at all](README.md#run-history-with-no-telemetry-at-all).
+- `highball runs --slowest[=N]` (or `--slowest N`) ranks rules by median
+  and slowest time over the last N full runs (default 20), or fast runs with
+  `--fast`, with each rule's share of a typical run and its timeouts. See
+  [Run history, with no telemetry at all](README.md#run-history-with-no-telemetry-at-all).
 
 ### Changed
 
+- `highball init` enables the `highball` plugin in the `.claude/settings.json`
+  it writes, and prints the plugin keys beside the hooks when the file
+  already exists. See [Claude Code plugin](README.md#claude-code-plugin).
 - The MCP `run_checks` tool is for the dashboard widget's re-run buttons
   only. It is marked app-only, so it stays out of the model's tool list, and
   a host that can't render the widget doesn't get it at all. Starting a run
